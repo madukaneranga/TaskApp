@@ -1,3 +1,4 @@
+import { AppFooter } from "@/components/layout/app-footer";
 import { Sidebar } from "@/components/layout/sidebar";
 import { MobileDrawer } from "@/components/layout/mobile-drawer";
 import type { User } from "@/lib/types";
@@ -16,6 +17,7 @@ export function AppShell({ user, children }: AppShellProps) {
       <div className="flex min-w-0 flex-1 flex-col bg-background">
         <MobileDrawer role={user.role} userName={user.user_code} />
         <main className="flex-1 animate-fade-in p-4 md:p-6">{children}</main>
+        <AppFooter />
       </div>
     </div>
   );

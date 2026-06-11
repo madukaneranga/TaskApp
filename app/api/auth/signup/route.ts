@@ -1,5 +1,36 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
+import type { SupabaseClient } from "@supabase/supabase-js";
+
+async function finishSignIn(
+  supabase: SupabaseClient,
+  admin: ReturnType<typeof createAdminClient>,
+  userId: string
+) {
+  const { data: profile } = await admin
+    .from("users")
+    .select("role, status")
+    .eq("id", userId)
+    .single();
+
+  if (!profile) {
+    await supabase.auth.signOut();
+    return { error: "Could not load your profile. Please contact admin." };
+  }
+
+  if (profile.status === "pending") {
+    await supabase.auth.signOut();
+    return { error: "Your account is awaiting admin approval." };
+  }
+
+  if (profile.status === "rejected") {
+    await supabase.auth.signOut();
+    return { error: "Your account was not approved. Contact admin." };
+  }
+
+  return { signedIn: true as const, role: profile.role };
+}
 
 export async function POST(request: Request) {
   try {
@@ -23,18 +54,62 @@ export async function POST(request: Request) {
     ]);
 
     if (existingEmail) {
-      return NextResponse.json({ error: "Email already registered" }, { status: 400 });
+      const { data: authUser } = await admin.auth.admin.getUserById(existingEmail.id);
+      if (authUser.user?.email_confirmed_at) {
+        const supabase = createClient();
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+          email: normalizedEmail,
+          password,
+        });
+
+        if (signInError) {
+          return NextResponse.json(
+            { error: "Email already registered. Sign in with your password." },
+            { status: 400 }
+          );
+        }
+
+        const result = await finishSignIn(supabase, admin, signInData.user.id);
+        if ("error" in result) {
+          return NextResponse.json({ error: result.error }, { status: 400 });
+        }
+
+        return NextResponse.json({
+          success: true,
+          needsVerification: false,
+          signedIn: true,
+          role: result.role,
+        });
+      }
+
+      const supabase = createClient();
+      const { error: resendError } = await supabase.auth.resend({
+        type: "signup",
+        email: normalizedEmail,
+      });
+
+      if (resendError) {
+        return NextResponse.json({ error: resendError.message }, { status: 400 });
+      }
+
+      return NextResponse.json({ success: true, email: normalizedEmail, needsVerification: true });
     }
 
     if (existingCode) {
       return NextResponse.json({ error: "User code already taken" }, { status: 400 });
     }
 
-    const { data: authData, error: authError } = await admin.auth.admin.createUser({
+    const supabase = createClient();
+    const { data: authData, error: authError } = await supabase.auth.signUp({
       email: normalizedEmail,
       password,
-      email_confirm: true,
-      user_metadata: { user_code: trimmedCode, full_name, status: "pending" },
+      options: {
+        data: {
+          user_code: trimmedCode,
+          full_name,
+          status: "pending",
+        },
+      },
     });
 
     if (authError) {
@@ -45,20 +120,49 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Failed to create user" }, { status: 500 });
     }
 
-    const { error: profileError } = await admin.from("users").upsert({
-      id: authData.user.id,
-      email: normalizedEmail,
-      full_name,
-      user_code: trimmedCode,
-      role: "user",
-      status: "pending",
-    });
+    const needsVerification = !authData.user.email_confirmed_at;
 
-    if (profileError) {
-      return NextResponse.json({ error: profileError.message }, { status: 500 });
+    if (needsVerification) {
+      if (authData.session) {
+        await supabase.auth.signOut();
+      }
+      return NextResponse.json({ success: true, email: normalizedEmail, needsVerification: true });
     }
 
-    return NextResponse.json({ success: true });
+    if (!authData.session) {
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email: normalizedEmail,
+        password,
+      });
+
+      if (signInError) {
+        return NextResponse.json({ success: true, needsVerification: false });
+      }
+
+      const result = await finishSignIn(supabase, admin, signInData.user.id);
+      if ("error" in result) {
+        return NextResponse.json({ error: result.error }, { status: 400 });
+      }
+
+      return NextResponse.json({
+        success: true,
+        needsVerification: false,
+        signedIn: true,
+        role: result.role,
+      });
+    }
+
+    const result = await finishSignIn(supabase, admin, authData.user.id);
+    if ("error" in result) {
+      return NextResponse.json({ error: result.error }, { status: 400 });
+    }
+
+    return NextResponse.json({
+      success: true,
+      needsVerification: false,
+      signedIn: true,
+      role: result.role,
+    });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Internal server error";
     console.error("Signup error:", err);

@@ -39,7 +39,20 @@ export function SignupForm() {
         return;
       }
 
-      toastSuccess("Account created", "Awaiting admin approval before you can sign in.");
+      if (data.signedIn) {
+        toastSuccess("Welcome back!");
+        router.push(data.role === "admin" ? "/admin" : "/dashboard");
+        router.refresh();
+        return;
+      }
+
+      if (data.needsVerification) {
+        toastSuccess("Check your email", "We sent a 6-digit code to verify your address.");
+        router.push(`/verify-email?email=${encodeURIComponent(data.email || email.toLowerCase())}`);
+        return;
+      }
+
+      toastSuccess("Account ready", "Your email is already verified. You can sign in.");
       router.push("/login");
     } catch {
       toastError("Signup failed", "Something went wrong. Please try again.");

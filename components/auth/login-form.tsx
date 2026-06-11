@@ -37,6 +37,16 @@ export function LoginForm({ initialMessage }: LoginFormProps) {
       });
 
       if (authError) {
+        const needsVerification =
+          authError.code === "email_not_confirmed" ||
+          authError.message.toLowerCase().includes("email not confirmed");
+
+        if (needsVerification) {
+          toastError("Email not verified", "Enter the code we sent to your email.");
+          router.push(`/verify-email?email=${encodeURIComponent(email.toLowerCase())}`);
+          return;
+        }
+
         toastError("Sign in failed", authError.message);
         return;
       }
