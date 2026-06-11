@@ -28,7 +28,7 @@ export default async function AdminPage({
 
   let tasksQuery = supabase
     .from("tasks")
-    .select("*, assigned_user:users!tasks_assigned_to_fkey(id, full_name)", {
+    .select("*, assigned_user:users!tasks_assigned_to_fkey(id, user_code)", {
       count: "exact",
     })
     .order("task_id", { ascending: false })
@@ -49,7 +49,7 @@ export default async function AdminPage({
     tasksQuery,
     supabase
       .from("sessions")
-      .select("*, user:users(id, full_name), tasks(id, task_name, client_name, status)")
+      .select("*, user:users(id, user_code), tasks(id, task_name, client_name, status)")
       .is("end_time", null),
     supabase
       .from("tasks")

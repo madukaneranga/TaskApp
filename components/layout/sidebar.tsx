@@ -9,8 +9,10 @@ import {
   Users,
   BarChart3,
   LogOut,
+  AlertCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AppBrand } from "@/components/layout/app-brand";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -30,11 +32,13 @@ const userLinks = [
   { href: "/tasks", label: "Tasks", icon: ClipboardList },
   { href: "/tasks/new", label: "New Task", icon: PlusCircle },
   { href: "/reports", label: "Reports", icon: BarChart3 },
+  { href: "/problems", label: "Report Problem", icon: AlertCircle },
 ];
 
 const adminLinks = [
   { href: "/admin", label: "Admin Dashboard", icon: LayoutDashboard },
   { href: "/admin/users", label: "Users", icon: Users },
+  { href: "/problems", label: "Problem Reports", icon: AlertCircle },
   { href: "/reports", label: "Reports", icon: BarChart3 },
   { href: "/tasks", label: "Tasks", icon: ClipboardList },
   { href: "/tasks/new", label: "New Task", icon: PlusCircle },
@@ -54,11 +58,9 @@ export function Sidebar({ role, userName, onNavigate }: SidebarProps) {
   }
 
   return (
-    <aside className="flex h-full w-[240px] flex-col border-r bg-card">
+    <aside className="flex h-full min-h-screen w-[240px] shrink-0 flex-col border-r bg-card">
       <div className="flex h-16 items-center border-b px-4">
-        <div className="flex h-10 w-full items-center justify-center rounded-md bg-brand-navy text-sm font-semibold text-white">
-          Logo
-        </div>
+        <AppBrand variant="sidebar" />
       </div>
 
       <nav className="flex-1 space-y-1 p-3">

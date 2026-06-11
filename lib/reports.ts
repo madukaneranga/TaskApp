@@ -2,7 +2,8 @@ import {
   computeSpanDurationSeconds,
   computeTaskWorkDurationSeconds,
 } from "@/lib/task-utils";
-import type { SessionSegment, TaskStatus, User } from "@/lib/types";
+import type { SessionSegment, TaskStatus, User, UserOption } from "@/lib/types";
+import { getUserLabel } from "@/lib/user-utils";
 
 export type ReportRangePreset = "today" | "7d" | "30d" | "custom";
 
@@ -26,7 +27,7 @@ export interface EnrichedReportTask {
   task_name: string;
   status: TaskStatus;
   assigned_to: string;
-  assigned_user?: { id: string; full_name: string };
+  assigned_user?: { id: string; user_code: string };
   created_at: string;
   total_images_count: number;
   start_time: string | null;
@@ -175,7 +176,7 @@ export function enrichTasksForReport(
     assigned_to: string;
     created_at: string;
     total_images_count: number;
-    assigned_user?: { id: string; full_name: string };
+    assigned_user?: { id: string; user_code: string };
   }>,
   sessions: SessionRow[]
 ): EnrichedReportTask[] {
@@ -227,7 +228,7 @@ function toTaskRow(task: EnrichedReportTask): ReportTaskRow {
     taskId: task.task_id,
     taskName: task.task_name,
     status: task.status,
-    assignedTo: task.assigned_user?.full_name || "—",
+    assignedTo: getUserLabel(task.assigned_user),
     createdAt: task.created_at,
     startTime: task.start_time,
     endTime: task.end_time,
@@ -242,7 +243,7 @@ function toTaskRow(task: EnrichedReportTask): ReportTaskRow {
 export function buildReportData(
   tasks: EnrichedReportTask[],
   sessions: SessionRow[],
-  users: Pick<User, "id" | "full_name">[],
+  users: UserOption[],
   params: ReportParams
 ): {
   summary: ReportSummary;
@@ -316,7 +317,7 @@ export function buildReportData(
   for (const user of users) {
     userMap.set(user.id, {
       userId: user.id,
-      userName: user.full_name,
+      userName: getUserLabel(user),
       completed: 0,
       inProgress: 0,
       paused: 0,

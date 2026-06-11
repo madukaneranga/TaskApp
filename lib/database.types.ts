@@ -14,6 +14,7 @@ export interface Database {
       task_status: "pending" | "in_progress" | "paused" | "completed";
       segment_type: "work" | "pause";
       otp_type: "signup" | "reset";
+      problem_status: "open" | "in_progress" | "resolved" | "closed";
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
@@ -23,6 +24,7 @@ export interface Database {
           id: string;
           email: string;
           full_name: string;
+          user_code: string;
           role: "admin" | "user";
           status: "pending" | "active" | "rejected";
           created_at: string;
@@ -31,6 +33,7 @@ export interface Database {
           id: string;
           email: string;
           full_name: string;
+          user_code: string;
           role?: "admin" | "user";
           status?: "pending" | "active" | "rejected";
           created_at?: string;
@@ -39,6 +42,7 @@ export interface Database {
           id?: string;
           email?: string;
           full_name?: string;
+          user_code?: string;
           role?: "admin" | "user";
           status?: "pending" | "active" | "rejected";
           created_at?: string;
@@ -208,6 +212,38 @@ export interface Database {
           role?: "admin" | "user";
           content?: string;
           created_at?: string;
+        };
+      };
+      problem_reports: {
+        Row: {
+          id: string;
+          user_id: string;
+          title: string;
+          description: string;
+          status: "open" | "in_progress" | "resolved" | "closed";
+          admin_response: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          title: string;
+          description: string;
+          status?: "open" | "in_progress" | "resolved" | "closed";
+          admin_response?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          title?: string;
+          description?: string;
+          status?: "open" | "in_progress" | "resolved" | "closed";
+          admin_response?: string | null;
+          created_at?: string;
+          updated_at?: string;
         };
       };
       status_history: {

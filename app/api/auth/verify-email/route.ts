@@ -27,12 +27,16 @@ export async function POST(request: Request) {
 
     const fullName =
       (data.user.user_metadata?.full_name as string) || email.split("@")[0];
+    const userCode =
+      (data.user.user_metadata?.user_code as string)?.trim() ||
+      `user-${data.user.id.slice(0, 8)}`;
 
     const admin = createAdminClient();
     await admin.from("users").upsert({
       id: data.user.id,
       email: email.toLowerCase(),
       full_name: fullName,
+      user_code: userCode,
       role: "user",
       status: "pending",
     });

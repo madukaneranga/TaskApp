@@ -1,3 +1,4 @@
+import { APP_NAME } from "@/lib/brand";
 import type { ReportTaskRow, ReportUserRow } from "@/lib/reports";
 import { formatCompletedDuration } from "@/lib/task-utils";
 import { formatDateTime } from "@/lib/utils";
@@ -139,6 +140,11 @@ export async function exportReportPdf(options: {
 
   const doc = new jsPDF({ orientation: "landscape" });
   const pageWidth = doc.internal.pageSize.getWidth();
+
+  doc.setFontSize(10);
+  doc.setTextColor(100);
+  doc.text(APP_NAME, pageWidth - 14, 16, { align: "right" });
+  doc.setTextColor(0);
 
   doc.setFontSize(16);
   doc.text(options.title, 14, 16);

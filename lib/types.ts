@@ -2,15 +2,20 @@ export type UserRole = "admin" | "user";
 export type UserStatus = "pending" | "active" | "rejected";
 export type TaskStatus = "pending" | "in_progress" | "paused" | "completed";
 export type SegmentType = "work" | "pause";
+export type ProblemStatus = "open" | "in_progress" | "resolved" | "closed";
 
 export interface User {
   id: string;
   email: string;
   full_name: string;
+  user_code: string;
   role: UserRole;
   status: UserStatus;
   created_at: string;
 }
+
+/** User fields needed for dropdowns and filters. */
+export type UserOption = Pick<User, "id" | "user_code">;
 
 export interface Task {
   id: string;
@@ -84,4 +89,23 @@ export const USER_STATUS_LABELS: Record<UserStatus, string> = {
   pending: "Pending",
   active: "Active",
   rejected: "Rejected",
+};
+
+export interface ProblemReport {
+  id: string;
+  user_id: string;
+  title: string;
+  description: string;
+  status: ProblemStatus;
+  admin_response: string | null;
+  created_at: string;
+  updated_at: string;
+  user?: User;
+}
+
+export const PROBLEM_STATUS_LABELS: Record<ProblemStatus, string> = {
+  open: "Open",
+  in_progress: "In Progress",
+  resolved: "Resolved",
+  closed: "Closed",
 };

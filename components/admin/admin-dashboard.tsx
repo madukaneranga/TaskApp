@@ -92,7 +92,7 @@ export function AdminDashboard({
                 >
                   <span className="h-2 w-2 rounded-full bg-green-500" />
                   <div>
-                    <p className="font-medium">{s.user?.full_name}</p>
+                    <p className="font-medium">{s.user?.user_code}</p>
                     <p className="text-sm text-muted-foreground">
                       {s.task?.task_name} — {s.task?.client_name}
                     </p>

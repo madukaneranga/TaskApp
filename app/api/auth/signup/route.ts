@@ -3,9 +3,10 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function POST(request: Request) {
   try {
-    const { full_name, email, password } = await request.json();
+    const { user_code, full_name, email, password } = await request.json();
+    const trimmedCode = typeof user_code === "string" ? user_code.trim() : "";
 
-    if (!full_name || !email || !password) {
+    if (!trimmedCode || !full_name || !email || !password) {
       return NextResponse.json({ error: "All fields are required" }, { status: 400 });
     }
 
@@ -16,21 +17,24 @@ export async function POST(request: Request) {
     const normalizedEmail = email.toLowerCase();
     const admin = createAdminClient();
 
-    const { data: existing } = await admin
-      .from("users")
-      .select("id")
-      .eq("email", normalizedEmail)
-      .maybeSingle();
+    const [{ data: existingEmail }, { data: existingCode }] = await Promise.all([
+      admin.from("users").select("id").eq("email", normalizedEmail).maybeSingle(),
+      admin.from("users").select("id").eq("user_code", trimmedCode).maybeSingle(),
+    ]);
 
-    if (existing) {
+    if (existingEmail) {
       return NextResponse.json({ error: "Email already registered" }, { status: 400 });
+    }
+
+    if (existingCode) {
+      return NextResponse.json({ error: "User code already taken" }, { status: 400 });
     }
 
     const { data: authData, error: authError } = await admin.auth.admin.createUser({
       email: normalizedEmail,
       password,
       email_confirm: true,
-      user_metadata: { full_name, status: "pending" },
+      user_metadata: { user_code: trimmedCode, full_name, status: "pending" },
     });
 
     if (authError) {
@@ -45,6 +49,7 @@ export async function POST(request: Request) {
       id: authData.user.id,
       email: normalizedEmail,
       full_name,
+      user_code: trimmedCode,
       role: "user",
       status: "pending",
     });

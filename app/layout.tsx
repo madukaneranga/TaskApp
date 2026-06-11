@@ -8,8 +8,13 @@ import { Toaster } from "@/components/ui/toaster";
 
 const inter = Inter({ subsets: ["latin"] });
 
+import { APP_NAME } from "@/lib/brand";
+
 export const metadata: Metadata = {
-  title: "Task Tracker",
+  title: {
+    default: APP_NAME,
+    template: `%s | ${APP_NAME}`,
+  },
   description: "Employee work tracking system for photo editing teams",
 };
 

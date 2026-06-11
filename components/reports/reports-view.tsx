@@ -44,11 +44,12 @@ import {
 import type { ReportParams, ReportSummary, ReportTaskRow, ReportUserRow } from "@/lib/reports";
 import { formatCompletedDuration } from "@/lib/task-utils";
 import { formatDateTime } from "@/lib/utils";
-import { TASK_STATUS_LABELS, type TaskStatus, type User } from "@/lib/types";
+import { TASK_STATUS_LABELS, type TaskStatus, type UserOption } from "@/lib/types";
+import { getUserLabel } from "@/lib/user-utils";
 
 interface ReportsViewProps {
   isAdmin: boolean;
-  users: Pick<User, "id" | "full_name">[];
+  users: UserOption[];
   params: ReportParams;
   summary: ReportSummary;
   taskRows: ReportTaskRow[];
@@ -195,7 +196,7 @@ export function ReportsView({
                   <SelectItem value="all">All users</SelectItem>
                   {users.map((u) => (
                     <SelectItem key={u.id} value={u.id}>
-                      {u.full_name}
+                      {getUserLabel(u)}
                     </SelectItem>
                   ))}
                 </SelectContent>

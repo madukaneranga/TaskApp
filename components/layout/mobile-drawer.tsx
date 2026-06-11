@@ -2,6 +2,7 @@
 
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
+import { AppBrand } from "@/components/layout/app-brand";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Button } from "@/components/ui/button";
 import type { UserRole } from "@/lib/types";
@@ -20,7 +21,7 @@ export function MobileDrawer({ role, userName }: MobileDrawerProps) {
         <Button variant="ghost" size="icon" onClick={() => setOpen(true)} aria-label="Open menu">
           <Menu className="h-5 w-5" />
         </Button>
-        <span className="ml-3 font-semibold text-brand-navy dark:text-foreground">Task Tracker</span>
+        <AppBrand variant="header" className="ml-3" href="/dashboard" />
       </div>
 
       {open && (

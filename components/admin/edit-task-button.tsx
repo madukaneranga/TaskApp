@@ -147,7 +147,7 @@ export function EditTaskButton({ task, users, hasActiveSession = false }: EditTa
                 <SelectContent>
                   {users.map((u) => (
                     <SelectItem key={u.id} value={u.id}>
-                      {u.full_name}
+                      {u.user_code}
                     </SelectItem>
                   ))}
                 </SelectContent>

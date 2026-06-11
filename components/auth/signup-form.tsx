@@ -10,6 +10,7 @@ import { toastError, toastSuccess } from "@/lib/toast-helpers";
 
 export function SignupForm() {
   const router = useRouter();
+  const [userCode, setUserCode] = useState("");
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -28,7 +29,7 @@ export function SignupForm() {
       const res = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ full_name: fullName, email, password }),
+        body: JSON.stringify({ user_code: userCode, full_name: fullName, email, password }),
       });
 
       const data = await res.json();
@@ -39,7 +40,7 @@ export function SignupForm() {
       }
 
       toastSuccess("Account created", "Awaiting admin approval before you can sign in.");
-      router.push("/login?message=pending");
+      router.push("/login");
     } catch {
       toastError("Signup failed", "Something went wrong. Please try again.");
     } finally {
@@ -49,6 +50,19 @@ export function SignupForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="userCode">User Code</Label>
+        <Input
+          id="userCode"
+          value={userCode}
+          onChange={(e) => setUserCode(e.target.value)}
+          placeholder="e.g. DT-001"
+          required
+        />
+        <p className="text-xs text-muted-foreground">
+          Your identifier shown on tasks and reports (not your full name).
+        </p>
+      </div>
       <div className="space-y-2">
         <Label htmlFor="fullName">Full Name</Label>
         <Input

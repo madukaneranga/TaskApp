@@ -13,7 +13,7 @@ export default async function NewTaskPage() {
       .from("users")
       .select("*")
       .eq("status", "active")
-      .order("full_name");
+      .order("user_code");
     users = (data || []) as User[];
   }
 

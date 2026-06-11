@@ -11,6 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { IconTip } from "@/components/ui/icon-tip";
 import { StatusBadge } from "@/components/tasks/status-badge";
 import { formatDateTime } from "@/lib/utils";
 import {
@@ -18,7 +19,12 @@ import {
   formatTaskSpanDuration,
   formatTaskWorkDuration,
 } from "@/lib/task-utils";
-import type { Task } from "@/lib/types";
+import type { Task, TaskStatus } from "@/lib/types";
+import { getUserLabel } from "@/lib/user-utils";
+
+function getStartActionLabel(status: TaskStatus): string {
+  return status === "paused" ? "Resume" : "Start";
+}
 
 interface TaskTableProps {
   tasks: Task[];
@@ -65,7 +71,7 @@ export function TaskTable({ tasks, onStart, showAssignedTo = true }: TaskTablePr
                   <StatusBadge status={task.status} />
                 </TableCell>
                 {showAssignedTo && (
-                  <TableCell>{task.assigned_user?.full_name || "—"}</TableCell>
+                  <TableCell>{getUserLabel(task.assigned_user)}</TableCell>
                 )}
                 <TableCell>{formatDateTime(task.created_at)}</TableCell>
                 <TableCell>{task.start_time ? formatDateTime(task.start_time) : "—"}</TableCell>
@@ -78,15 +84,24 @@ export function TaskTable({ tasks, onStart, showAssignedTo = true }: TaskTablePr
                 <TableCell>{task.end_time ? formatDateTime(task.end_time) : "—"}</TableCell>
                 <TableCell>
                   <div className="flex gap-1">
-                    <Button variant="ghost" size="icon" asChild>
-                      <Link href={`/tasks/${task.id}`}>
-                        <Eye className="h-4 w-4" />
-                      </Link>
-                    </Button>
-                    {onStart && (task.status === "pending" || task.status === "paused") && (
-                      <Button variant="ghost" size="icon" onClick={() => onStart(task.id)}>
-                        <Play className="h-4 w-4" />
+                    <IconTip label="View details">
+                      <Button variant="ghost" size="icon" asChild>
+                        <Link href={`/tasks/${task.id}`} aria-label="View details">
+                          <Eye className="h-4 w-4" />
+                        </Link>
                       </Button>
+                    </IconTip>
+                    {onStart && (task.status === "pending" || task.status === "paused") && (
+                      <IconTip label={getStartActionLabel(task.status)}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label={getStartActionLabel(task.status)}
+                          onClick={() => onStart(task.id)}
+                        >
+                          <Play className="h-4 w-4" />
+                        </Button>
+                      </IconTip>
                     )}
                   </div>
                 </TableCell>
@@ -109,7 +124,7 @@ export function TaskTable({ tasks, onStart, showAssignedTo = true }: TaskTablePr
             </div>
             <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
               <span>{formatTaskImageCount(task)} images</span>
-              {showAssignedTo && <span>• {task.assigned_user?.full_name}</span>}
+              {showAssignedTo && <span>• {getUserLabel(task.assigned_user)}</span>}
               <span>• Created {formatDateTime(task.created_at)}</span>
               <span>• Start {task.start_time ? formatDateTime(task.start_time) : "—"}</span>
               <span>• Work {formatTaskWorkDuration(task)}</span>
@@ -122,7 +137,7 @@ export function TaskTable({ tasks, onStart, showAssignedTo = true }: TaskTablePr
               </Button>
               {onStart && (task.status === "pending" || task.status === "paused") && (
                 <Button size="sm" onClick={() => onStart(task.id)}>
-                  Start
+                  {getStartActionLabel(task.status)}
                 </Button>
               )}
             </div>

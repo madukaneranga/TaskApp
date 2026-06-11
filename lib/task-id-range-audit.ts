@@ -13,7 +13,7 @@ export interface TaskIdRangeAuditRow {
   task_id: number;
   task_name: string;
   status: TaskStatus;
-  assigned_user?: { full_name: string } | null;
+  assigned_user?: { user_code: string } | null;
 }
 
 export interface TaskIdRangeAuditTask extends TaskIdRangeAuditRow {

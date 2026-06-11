@@ -6,7 +6,7 @@ import {
   enrichTasksForReport,
   parseReportParams,
 } from "@/lib/reports";
-import type { TaskStatus, User } from "@/lib/types";
+import type { TaskStatus, UserOption } from "@/lib/types";
 
 export default async function ReportsPage({
   searchParams,
@@ -30,7 +30,7 @@ export default async function ReportsPage({
 
   let tasksQuery = supabase
     .from("tasks")
-    .select("*, assigned_user:users!tasks_assigned_to_fkey(id, full_name)")
+    .select("*, assigned_user:users!tasks_assigned_to_fkey(id, user_code)")
     .order("task_id", { ascending: false });
 
   if (!isAdmin) {
@@ -40,8 +40,8 @@ export default async function ReportsPage({
   }
 
   const usersQuery = isAdmin
-    ? supabase.from("users").select("id, full_name").eq("status", "active").order("full_name")
-    : supabase.from("users").select("id, full_name").eq("id", currentUser.id);
+    ? supabase.from("users").select("id, user_code").eq("status", "active").order("user_code")
+    : supabase.from("users").select("id, user_code").eq("id", currentUser.id);
 
   const [{ data: tasksData }, { data: sessionsData }, { data: usersData }] = await Promise.all([
     tasksQuery,
@@ -60,7 +60,7 @@ export default async function ReportsPage({
       assigned_to: string;
       created_at: string;
       total_images_count: number;
-      assigned_user?: { id: string; full_name: string };
+      assigned_user?: { id: string; user_code: string };
     }>,
     (sessionsData || []) as Parameters<typeof enrichTasksForReport>[1]
   );
@@ -68,7 +68,7 @@ export default async function ReportsPage({
   const report = buildReportData(
     tasks,
     (sessionsData || []) as Parameters<typeof buildReportData>[1],
-    (usersData || []) as Pick<User, "id" | "full_name">[],
+    (usersData || []) as UserOption[],
     params
   );
 
@@ -82,7 +82,7 @@ export default async function ReportsPage({
       </div>
       <ReportsView
         isAdmin={isAdmin}
-        users={(usersData || []) as Pick<User, "id" | "full_name">[]}
+        users={(usersData || []) as UserOption[]}
         params={params}
         summary={report.summary}
         taskRows={report.taskRows}

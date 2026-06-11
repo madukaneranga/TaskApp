@@ -212,7 +212,7 @@ export function TaskIdRangeFilter() {
                             <StatusBadge status={task.status} />
                           </td>
                           <td className="px-4 py-2 text-muted-foreground">
-                            {task.assigned_user?.full_name || "—"}
+                            {task.assigned_user?.user_code || "—"}
                           </td>
                           <td className="px-4 py-2 text-right">
                             <Button variant="link" size="sm" className="h-auto p-0" asChild>

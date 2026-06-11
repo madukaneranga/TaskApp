@@ -9,6 +9,7 @@ import { formatDateTime } from "@/lib/utils";
 import { toastError, toastSuccess } from "@/lib/toast-helpers";
 import type { PaginationMeta } from "@/lib/pagination";
 import type { Note } from "@/lib/types";
+import { getUserLabel } from "@/lib/user-utils";
 
 interface NotesThreadProps {
   taskId: string;
@@ -62,7 +63,7 @@ export function NotesThread({
           {notes.map((note) => (
             <div key={note.id} className="rounded-lg border p-3">
               <div className="flex items-center gap-2 text-sm">
-                <span className="font-medium">{note.user?.full_name || "Unknown"}</span>
+                <span className="font-medium">{getUserLabel(note.user) || "Unknown"}</span>
                 <span className="rounded bg-muted px-1.5 py-0.5 text-xs capitalize">
                   {note.role}
                 </span>

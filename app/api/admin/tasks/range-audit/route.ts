@@ -51,7 +51,7 @@ export async function GET(request: Request) {
 
     const { data: tasks, error } = await supabase
       .from("tasks")
-      .select("id, task_id, task_name, status, assigned_user:users!tasks_assigned_to_fkey(full_name)")
+      .select("id, task_id, task_name, status, assigned_user:users!tasks_assigned_to_fkey(user_code)")
       .gte("task_id", from)
       .lte("task_id", to)
       .order("task_id", { ascending: true });

@@ -1,7 +1,10 @@
+import Link from "next/link";
+import { PlusCircle } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { ActiveTasksPanel } from "@/components/timer/active-tasks-panel";
 import { DashboardTasks } from "@/components/tasks/dashboard-tasks";
+import { Button } from "@/components/ui/button";
 import { mapActiveSessionRows } from "@/lib/session-mapper";
 import {
   buildPaginationMeta,
@@ -32,7 +35,7 @@ export default async function DashboardPage({
         .order("start_time", { ascending: false }),
       supabase
         .from("tasks")
-        .select("*, assigned_user:users!tasks_assigned_to_fkey(id, full_name)", {
+        .select("*, assigned_user:users!tasks_assigned_to_fkey(id, user_code)", {
           count: "exact",
         })
         .eq("assigned_to", user.id)
@@ -49,9 +52,17 @@ export default async function DashboardPage({
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-brand-navy dark:text-foreground">Dashboard</h1>
-        <p className="text-muted-foreground">Welcome back, {user.full_name}</p>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-brand-navy dark:text-foreground">Dashboard</h1>
+          <p className="text-muted-foreground">Welcome back, {user.user_code}</p>
+        </div>
+        <Button className="bg-brand-blue gap-2" asChild>
+          <Link href="/tasks/new">
+            <PlusCircle className="h-4 w-4" />
+            New Task
+          </Link>
+        </Button>
       </div>
 
       <ActiveTasksPanel sessions={activeSessions} />

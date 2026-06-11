@@ -40,6 +40,7 @@ const ACTION_MESSAGES: Record<string, string> = {
   deactivate: "User deactivated",
   change_role: "Role updated",
   reset_password: "Password reset",
+  update_profile: "Profile updated",
 };
 
 interface UsersTableProps {
@@ -50,6 +51,9 @@ interface UsersTableProps {
 export function UsersTable({ users, pagination }: UsersTableProps) {
   const router = useRouter();
   const [resetUser, setResetUser] = useState<User | null>(null);
+  const [editUser, setEditUser] = useState<User | null>(null);
+  const [editUserCode, setEditUserCode] = useState("");
+  const [editFullName, setEditFullName] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -58,6 +62,18 @@ export function UsersTable({ users, pagination }: UsersTableProps) {
     setResetUser(null);
     setNewPassword("");
     setConfirmPassword("");
+  }
+
+  function openEditDialog(user: User) {
+    setEditUser(user);
+    setEditUserCode(user.user_code);
+    setEditFullName(user.full_name);
+  }
+
+  function closeEditDialog() {
+    setEditUser(null);
+    setEditUserCode("");
+    setEditFullName("");
   }
 
   async function performAction(
@@ -93,12 +109,22 @@ export function UsersTable({ users, pagination }: UsersTableProps) {
     closeResetDialog();
   }
 
+  async function handleUpdateProfile() {
+    if (!editUser) return;
+    await performAction(editUser.id, "update_profile", {
+      user_code: editUserCode,
+      full_name: editFullName,
+    });
+    closeEditDialog();
+  }
+
   return (
     <>
       <div className="hidden md:block rounded-lg border">
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead>User Code</TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Role</TableHead>
@@ -110,7 +136,8 @@ export function UsersTable({ users, pagination }: UsersTableProps) {
           <TableBody>
             {users.map((user) => (
               <TableRow key={user.id}>
-                <TableCell className="font-medium">{user.full_name}</TableCell>
+                <TableCell className="font-medium">{user.user_code}</TableCell>
+                <TableCell>{user.full_name}</TableCell>
                 <TableCell>{user.email}</TableCell>
                 <TableCell className="capitalize">{user.role}</TableCell>
                 <TableCell>
@@ -155,6 +182,14 @@ export function UsersTable({ users, pagination }: UsersTableProps) {
                       size="sm"
                       variant="outline"
                       disabled={loading}
+                      onClick={() => openEditDialog(user)}
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={loading}
                       onClick={() => setResetUser(user)}
                     >
                       Reset Password
@@ -187,8 +222,8 @@ export function UsersTable({ users, pagination }: UsersTableProps) {
           <div key={user.id} className="rounded-lg border p-4 space-y-3">
             <div className="flex justify-between">
               <div>
-                <p className="font-medium">{user.full_name}</p>
-                <p className="text-sm text-muted-foreground">{user.email}</p>
+                <p className="font-medium">{user.user_code}</p>
+                <p className="text-sm text-muted-foreground">{user.full_name} • {user.email}</p>
               </div>
               <Badge variant={user.status as UserStatus}>
                 {USER_STATUS_LABELS[user.status]}
@@ -206,6 +241,9 @@ export function UsersTable({ users, pagination }: UsersTableProps) {
                   </Button>
                 </>
               )}
+              <Button size="sm" variant="outline" onClick={() => openEditDialog(user)}>
+                Edit
+              </Button>
               <Button size="sm" variant="outline" onClick={() => setResetUser(user)}>
                 Reset Password
               </Button>
@@ -220,10 +258,48 @@ export function UsersTable({ users, pagination }: UsersTableProps) {
         </Suspense>
       )}
 
+      <Dialog open={!!editUser} onOpenChange={(open) => !open && closeEditDialog()}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit User</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="editUserCode">User Code</Label>
+              <Input
+                id="editUserCode"
+                value={editUserCode}
+                onChange={(e) => setEditUserCode(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="editFullName">Full Name</Label>
+              <Input
+                id="editFullName"
+                value={editFullName}
+                onChange={(e) => setEditFullName(e.target.value)}
+                required
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={closeEditDialog}>Cancel</Button>
+            <Button
+              className="bg-brand-blue"
+              onClick={handleUpdateProfile}
+              disabled={!editUserCode.trim() || !editFullName.trim() || loading}
+            >
+              Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={!!resetUser} onOpenChange={(open) => !open && closeResetDialog()}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Reset Password for {resetUser?.full_name}</DialogTitle>
+            <DialogTitle>Reset Password for {resetUser?.user_code}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">

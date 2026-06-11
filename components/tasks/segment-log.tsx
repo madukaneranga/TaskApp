@@ -11,6 +11,7 @@ import {
 import { computeSegmentDurationSeconds } from "@/lib/session-utils";
 import { formatDuration } from "@/lib/utils";
 import type { SegmentType, SessionSegment } from "@/lib/types";
+import { getUserLabel } from "@/lib/user-utils";
 
 export interface SegmentLogRow {
   id: string;
@@ -30,9 +31,16 @@ const SEGMENT_TYPE_LABELS: Record<SegmentType, string> = {
 type SessionWithSegments = {
   id: string;
   start_time: string;
-  user?: { full_name: string } | null;
+  user?: { user_code: string } | { user_code: string }[] | null;
   session_segments?: SessionSegment[];
 };
+
+function resolveSessionUser(
+  user: SessionWithSegments["user"]
+): { user_code: string } | null {
+  if (!user) return null;
+  return Array.isArray(user) ? user[0] ?? null : user;
+}
 
 export function buildSegmentLogRows(sessions: SessionWithSegments[]): SegmentLogRow[] {
   const rows: SegmentLogRow[] = [];
@@ -45,7 +53,7 @@ export function buildSegmentLogRows(sessions: SessionWithSegments[]): SegmentLog
     for (const segment of segments) {
       rows.push({
         id: segment.id,
-        userName: session.user?.full_name ?? "—",
+        userName: getUserLabel(resolveSessionUser(session.user)),
         sessionStart: session.start_time,
         type: segment.type,
         startedAt: segment.started_at,

@@ -13,11 +13,12 @@ import {
 } from "@/components/ui/select";
 import { TaskIdRangeFilter } from "@/components/tasks/task-id-range-filter";
 import type { TasksPageFilterParams } from "@/lib/tasks-page-filters";
-import { TASK_STATUS_LABELS, type TaskStatus, type User } from "@/lib/types";
+import { TASK_STATUS_LABELS, type TaskStatus, type UserOption } from "@/lib/types";
+import { getUserLabel } from "@/lib/user-utils";
 
 interface TasksPageFiltersProps {
   isAdmin: boolean;
-  users: Pick<User, "id" | "full_name">[];
+  users: UserOption[];
   filters: TasksPageFilterParams;
 }
 
@@ -110,7 +111,7 @@ export function TasksPageFilters({ isAdmin, users, filters }: TasksPageFiltersPr
                 <SelectItem value="all">All users</SelectItem>
                 {users.map((user) => (
                   <SelectItem key={user.id} value={user.id}>
-                    {user.full_name}
+                    {getUserLabel(user)}
                   </SelectItem>
                 ))}
               </SelectContent>

@@ -23,7 +23,7 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const { user_id, action, role, new_password } = await request.json();
+    const { user_id, action, role, new_password, user_code, full_name } = await request.json();
     const admin = createAdminClient();
 
     switch (action) {
@@ -48,6 +48,37 @@ export async function PATCH(request: Request) {
         }
         await admin.auth.admin.updateUserById(user_id, { password: new_password });
         break;
+      case "update_profile": {
+        const updates: { user_code?: string; full_name?: string } = {};
+        if (typeof user_code === "string") {
+          const trimmedCode = user_code.trim();
+          if (!trimmedCode) {
+            return NextResponse.json({ error: "User code is required" }, { status: 400 });
+          }
+          const { data: taken } = await admin
+            .from("users")
+            .select("id")
+            .eq("user_code", trimmedCode)
+            .neq("id", user_id)
+            .maybeSingle();
+          if (taken) {
+            return NextResponse.json({ error: "User code already taken" }, { status: 400 });
+          }
+          updates.user_code = trimmedCode;
+        }
+        if (typeof full_name === "string") {
+          const trimmedName = full_name.trim();
+          if (!trimmedName) {
+            return NextResponse.json({ error: "Full name is required" }, { status: 400 });
+          }
+          updates.full_name = trimmedName;
+        }
+        if (Object.keys(updates).length === 0) {
+          return NextResponse.json({ error: "No profile fields to update" }, { status: 400 });
+        }
+        await admin.from("users").update(updates).eq("id", user_id);
+        break;
+      }
       default:
         return NextResponse.json({ error: "Invalid action" }, { status: 400 });
     }

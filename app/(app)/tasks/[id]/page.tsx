@@ -34,6 +34,7 @@ import { TaskStartResumeButton } from "@/components/tasks/task-start-resume-butt
 import { SegmentLog, buildSegmentLogRows } from "@/components/tasks/segment-log";
 import { getSessionElapsedSeconds } from "@/lib/session-mapper";
 import type { Note, Session, SessionSegment, StatusHistoryEntry, Task, User } from "@/lib/types";
+import { getUserLabel } from "@/lib/user-utils";
 
 export default async function TaskDetailPage({
   params,
@@ -71,24 +72,24 @@ export default async function TaskDetailPage({
   ] = await Promise.all([
     supabase
       .from("tasks")
-      .select("*, assigned_user:users!tasks_assigned_to_fkey(id, full_name, email)")
+      .select("*, assigned_user:users!tasks_assigned_to_fkey(id, user_code, email)")
       .eq("id", params.id)
       .single(),
     supabase
       .from("sessions")
-      .select("*, user:users(id, full_name)", { count: "exact" })
+      .select("*, user:users(id, user_code)", { count: "exact" })
       .eq("task_id", params.id)
       .order("start_time", { ascending: false })
       .range(sessionsRange.from, sessionsRange.to),
     supabase
       .from("notes")
-      .select("*, user:users(id, full_name)", { count: "exact" })
+      .select("*, user:users(id, user_code)", { count: "exact" })
       .eq("task_id", params.id)
       .order("created_at", { ascending: false })
       .range(notesRange.from, notesRange.to),
     supabase
       .from("status_history")
-      .select("*, changed_by_user:users!status_history_changed_by_fkey(id, full_name)", {
+      .select("*, changed_by_user:users!status_history_changed_by_fkey(id, user_code)", {
         count: "exact",
       })
       .eq("task_id", params.id)
@@ -133,7 +134,7 @@ export default async function TaskDetailPage({
       .maybeSingle(),
     supabase
       .from("sessions")
-      .select("id, start_time, end_time, duration, user:users(id, full_name), session_segments(*)")
+      .select("id, start_time, end_time, duration, user:users(id, user_code), session_segments(*)")
       .eq("task_id", params.id)
       .order("start_time", { ascending: true }),
   ]);
@@ -146,11 +147,11 @@ export default async function TaskDetailPage({
       .from("users")
       .select("*")
       .eq("status", "active")
-      .order("full_name");
+      .order("user_code");
     activeUsers = (usersData || []) as User[];
   }
 
-  const task = taskData as Task & { assigned_user: { full_name: string; email: string } };
+  const task = taskData as Task & { assigned_user: { user_code: string; email: string } };
 
   const sessions = (sessionsData || []) as Session[];
   const notes = (notesData || []) as Note[];
@@ -246,7 +247,7 @@ export default async function TaskDetailPage({
             <CardTitle className="text-sm font-medium text-muted-foreground">Assigned To</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-lg font-semibold">{task.assigned_user?.full_name}</p>
+            <p className="text-lg font-semibold">{getUserLabel(task.assigned_user)}</p>
           </CardContent>
         </Card>
         <Card>
@@ -330,7 +331,7 @@ export default async function TaskDetailPage({
                 <TableBody>
                   {sessions.map((s) => (
                     <TableRow key={s.id}>
-                      <TableCell>{s.user?.full_name}</TableCell>
+                      <TableCell>{getUserLabel(s.user)}</TableCell>
                       <TableCell>
                         <LocalDateTime value={s.start_time} />
                       </TableCell>
@@ -378,7 +379,7 @@ export default async function TaskDetailPage({
                   <span>
                     {h.old_status || "—"} → {h.new_status}
                   </span>
-                  <span className="text-muted-foreground">by {h.changed_by_user?.full_name}</span>
+                  <span className="text-muted-foreground">by {getUserLabel(h.changed_by_user)}</span>
                 </div>
               ))}
             </div>
