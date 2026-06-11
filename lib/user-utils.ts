@@ -1,3 +1,10 @@
+export const USER_ID_PREFIX = "User-";
+
+export function buildUserId(userNumber: string): string {
+  const trimmed = userNumber.trim();
+  return trimmed ? `${USER_ID_PREFIX}${trimmed}` : "";
+}
+
 /** User fields used for display in tasks, reports, and the UI. */
 export type UserLabelSource = {
   user_code?: string | null;
