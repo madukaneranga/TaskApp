@@ -265,13 +265,16 @@ export function UsersTable({ users, pagination }: UsersTableProps) {
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="editUserCode">User Code</Label>
+              <Label htmlFor="editUserCode">User ID</Label>
               <Input
                 id="editUserCode"
                 value={editUserCode}
                 onChange={(e) => setEditUserCode(e.target.value)}
                 required
               />
+              <p className="text-xs text-muted-foreground">
+                How this user appears in the task app on tasks and reports.
+              </p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="editFullName">Full Name</Label>

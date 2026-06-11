@@ -64,7 +64,7 @@ export function SignupForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="userCode">User Code</Label>
+        <Label htmlFor="userCode">User ID</Label>
         <Input
           id="userCode"
           value={userCode}
@@ -73,7 +73,7 @@ export function SignupForm() {
           required
         />
         <p className="text-xs text-muted-foreground">
-          Your identifier shown on tasks and reports (not your full name).
+          Your ID in this task app — how you appear on tasks, reports, and your dashboard.
         </p>
       </div>
       <div className="space-y-2">
@@ -86,14 +86,18 @@ export function SignupForm() {
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
+        <Label htmlFor="email">Personal Email</Label>
         <Input
           id="email"
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          placeholder="you@example.com"
           required
         />
+        <p className="text-xs text-muted-foreground">
+          Use your personal email for sign-in and verification codes.
+        </p>
       </div>
       <div className="space-y-2">
         <Label htmlFor="password">Password</Label>

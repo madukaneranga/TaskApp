@@ -38,14 +38,18 @@ export function ForgotPasswordForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
+        <Label htmlFor="email">Personal Email</Label>
         <Input
           id="email"
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          placeholder="you@example.com"
           required
         />
+        <p className="text-xs text-muted-foreground">
+          Enter the personal email linked to your account. We&apos;ll send a reset code there.
+        </p>
       </div>
       <Button type="submit" className="w-full bg-brand-blue" disabled={loading}>
         {loading ? "Sending..." : "Send Reset Code"}

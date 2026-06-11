@@ -88,15 +88,19 @@ export function LoginForm({ initialMessage }: LoginFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
+        <Label htmlFor="email">Personal Email</Label>
         <Input
           id="email"
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          placeholder="you@example.com"
           required
           autoComplete="email"
         />
+        <p className="text-xs text-muted-foreground">
+          Sign in with the personal email you used to register.
+        </p>
       </div>
       <div className="space-y-2">
         <Label htmlFor="password">Password</Label>

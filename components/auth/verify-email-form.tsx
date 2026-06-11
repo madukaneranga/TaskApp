@@ -85,7 +85,7 @@ export function VerifyEmailForm({ email }: VerifyEmailFormProps) {
   return (
     <form onSubmit={handleVerify} className="space-y-6">
       <p className="text-center text-sm text-muted-foreground">
-        Code sent to <strong>{email}</strong>
+        Enter the 6-digit code sent to your personal email: <strong>{email}</strong>
       </p>
       <OtpInput value={otp} onChange={setOtp} disabled={loading} />
       <Button type="submit" className="w-full bg-brand-blue" disabled={loading || otp.length !== 6}>

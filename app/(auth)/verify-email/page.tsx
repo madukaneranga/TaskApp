@@ -26,7 +26,7 @@ export default async function VerifyEmailPage({
   }
 
   return (
-    <AuthCard title="Verify Email" description="Enter the 6-digit code sent to your email">
+    <AuthCard title="Verify Email" description="Enter the 6-digit code sent to your personal email">
       <VerifyEmailForm email={searchParams.email || ""} />
     </AuthCard>
   );

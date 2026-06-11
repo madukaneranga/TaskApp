@@ -14,7 +14,7 @@ export default function LoginPage({
         : undefined;
 
   return (
-    <AuthCard title="Sign In" description="Enter your credentials to access your account">
+    <AuthCard title="Sign In" description="Sign in with your personal email and password">
       <LoginForm initialMessage={message} />
     </AuthCard>
   );

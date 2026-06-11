@@ -78,6 +78,11 @@ export function ResetPasswordForm({ email }: ResetPasswordFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {email ? (
+        <p className="text-center text-sm text-muted-foreground">
+          Code sent to your personal email: <strong>{email}</strong>
+        </p>
+      ) : null}
       <OtpInput value={otp} onChange={setOtp} disabled={loading} />
       <div className="space-y-2">
         <Label htmlFor="password">New Password</Label>
