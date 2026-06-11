@@ -140,8 +140,15 @@ export function auditTaskIdRange(
 ): TaskIdRangeAuditResult {
   const { from, to } = range;
   const totalInRange = to - from + 1;
-  const exceptSet = new Set(exceptIds.filter((id) => id >= from && id <= to));
-  const exceptIdsInRange = [...exceptSet].sort((a, b) => a - b);
+  const exceptIdsInRange: number[] = [];
+  const exceptSet = new Set<number>();
+  for (const id of exceptIds) {
+    if (id >= from && id <= to && !exceptSet.has(id)) {
+      exceptSet.add(id);
+      exceptIdsInRange.push(id);
+    }
+  }
+  exceptIdsInRange.sort((a, b) => a - b);
   const expectedCount = totalInRange - exceptSet.size;
   const existingIds = new Set(tasks.map((task) => task.task_id));
   const missingNumbers: number[] = [];
