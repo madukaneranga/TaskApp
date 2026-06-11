@@ -7,10 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toastError, toastSuccess } from "@/lib/toast-helpers";
+import { USER_ID_PREFIX, buildUserId } from "@/lib/user-utils";
 
 export function SignupForm() {
   const router = useRouter();
-  const [userCode, setUserCode] = useState("");
+  const [userNumber, setUserNumber] = useState("");
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -23,6 +24,13 @@ export function SignupForm() {
       toastError("Passwords do not match", "Please make sure both passwords are the same.");
       return;
     }
+
+    const userCode = buildUserId(userNumber);
+    if (!userCode) {
+      toastError("User number required", "Enter the user number you already use.");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -64,16 +72,30 @@ export function SignupForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="userCode">User ID</Label>
-        <Input
-          id="userCode"
-          value={userCode}
-          onChange={(e) => setUserCode(e.target.value)}
-          placeholder="e.g. DT-001"
-          required
-        />
+        <Label htmlFor="userNumber">User ID</Label>
+        <div className="flex">
+          <span className="inline-flex h-10 shrink-0 items-center rounded-l-md border border-r-0 border-input bg-muted px-3 text-sm font-medium">
+            {USER_ID_PREFIX}
+          </span>
+          <Input
+            id="userNumber"
+            type="text"
+            inputMode="numeric"
+            value={userNumber}
+            onChange={(e) => setUserNumber(e.target.value.replace(/\D/g, ""))}
+            placeholder="2001"
+            className="rounded-l-none"
+            required
+          />
+        </div>
         <p className="text-xs text-muted-foreground">
-          Your ID in this task app — how you appear on tasks, reports, and your dashboard.
+          Enter the user number you already use in the task app.
+          {userNumber ? (
+            <>
+              {" "}
+              Your ID will be <strong>{buildUserId(userNumber)}</strong>.
+            </>
+          ) : null}
         </p>
       </div>
       <div className="space-y-2">
