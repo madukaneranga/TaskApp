@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { sendProblemReportEmail } from "@/lib/support-email";
+import { getUserLabel } from "@/lib/user-utils";
 
 export async function POST(request: Request) {
   try {
@@ -18,6 +20,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Title and description are required" }, { status: 400 });
     }
 
+    const { data: profile } = await supabase
+      .from("users")
+      .select("email, user_code")
+      .eq("id", user.id)
+      .single();
+
     const { data: report, error } = await supabase
       .from("problem_reports")
       .insert({
@@ -31,6 +39,14 @@ export async function POST(request: Request) {
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
+
+    await sendProblemReportEmail({
+      title: report.title,
+      description: report.description,
+      reporterEmail: profile?.email ?? user.email ?? "unknown",
+      reporterUserCode: getUserLabel(profile),
+      reportId: report.id,
+    });
 
     return NextResponse.json({ report });
   } catch {
