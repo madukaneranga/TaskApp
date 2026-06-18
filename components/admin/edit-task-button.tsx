@@ -21,8 +21,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { TaskNameSelect } from "@/components/tasks/task-name-select";
 import { toastError, toastSuccess } from "@/lib/toast-helpers";
-import { DEFAULT_CLIENT_NAME, isNumericTaskId } from "@/lib/task-utils";
+import { DEFAULT_CLIENT_NAME, isNumericTaskId, TASK_NAME_OPTIONS } from "@/lib/task-utils";
 import { TASK_STATUS_LABELS, type Task, type TaskStatus, type User } from "@/lib/types";
 
 interface EditTaskButtonProps {
@@ -58,6 +59,11 @@ export function EditTaskButton({ task, users, hasActiveSession = false }: EditTa
 
     if (!isNumericTaskId(taskId)) {
       toastError("Invalid Task ID", "Task ID must be a number.");
+      return;
+    }
+
+    if (!taskName.trim()) {
+      toastError("Task name required", "Please select a task name.");
       return;
     }
 
@@ -114,15 +120,16 @@ export function EditTaskButton({ task, users, hasActiveSession = false }: EditTa
                 required
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="editTaskName">Task Name</Label>
-              <Input
-                id="editTaskName"
-                value={taskName}
-                onChange={(e) => setTaskName(e.target.value)}
-                required
-              />
-            </div>
+            <TaskNameSelect
+              id="editTaskName"
+              value={taskName}
+              onChange={setTaskName}
+              extraOptions={
+                TASK_NAME_OPTIONS.includes(task.task_name as (typeof TASK_NAME_OPTIONS)[number])
+                  ? []
+                  : [task.task_name]
+              }
+            />
             <div className="space-y-2">
               <Label htmlFor="editClientName">Client Name</Label>
               <Input id="editClientName" value={clientName} disabled />
