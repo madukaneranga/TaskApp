@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { closeOpenSessionsForTask } from "@/lib/close-open-sessions";
 import { parseTaskId } from "@/lib/task-utils";
 import type { TaskStatus } from "@/lib/types";
 
@@ -43,7 +45,7 @@ export async function PATCH(
 
     const { data: existing } = await supabase
       .from("tasks")
-      .select("status")
+      .select("status, assigned_to")
       .eq("id", params.id)
       .single();
 
@@ -82,6 +84,18 @@ export async function PATCH(
 
     if (assigned_to) updates.assigned_to = assigned_to;
     if (status !== undefined) updates.status = status;
+
+    const isReassignment =
+      Boolean(assigned_to) && assigned_to !== existing.assigned_to;
+
+    if (isReassignment) {
+      const admin = createAdminClient();
+      await closeOpenSessionsForTask(admin, params.id);
+
+      if (existing.status !== "completed" && existing.status !== "pending") {
+        updates.status = "paused";
+      }
+    }
 
     const { data: task, error } = await supabase
       .from("tasks")

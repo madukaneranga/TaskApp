@@ -13,12 +13,16 @@ interface DashboardTasksProps {
   tasks: Task[];
   showAssignedTo?: boolean;
   pagination?: PaginationMeta;
+  activeTaskIds?: Iterable<string>;
+  currentUserId?: string;
 }
 
 export function DashboardTasks({
   tasks,
   showAssignedTo = false,
   pagination,
+  activeTaskIds,
+  currentUserId,
 }: DashboardTasksProps) {
   const router = useRouter();
 
@@ -41,7 +45,13 @@ export function DashboardTasks({
 
   return (
     <div className="space-y-4">
-      <TaskTable tasks={tasks} onStart={handleStart} showAssignedTo={showAssignedTo} />
+      <TaskTable
+        tasks={tasks}
+        onStart={handleStart}
+        showAssignedTo={showAssignedTo}
+        activeTaskIds={activeTaskIds}
+        currentUserId={currentUserId}
+      />
       {pagination && (
         <Suspense fallback={null}>
           <Pagination pagination={pagination} />

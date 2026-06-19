@@ -17,6 +17,43 @@ export function parseStatusFilter(value: string | undefined): TaskStatus | "all"
   return "all";
 }
 
+export function getTaskStartActionLabel(status: TaskStatus): string {
+  return status === "paused" ? "Resume" : "Start";
+}
+
+export function canShowTaskStartAction(
+  task: Pick<Task, "id" | "status">,
+  options?: {
+    assignedTo?: string;
+    currentUserId?: string;
+    hasActiveSession?: boolean;
+    activeTaskIds?: Iterable<string>;
+  }
+): boolean {
+  if (task.status === "completed") return false;
+
+  if (
+    options?.assignedTo &&
+    options.currentUserId &&
+    options.assignedTo !== options.currentUserId
+  ) {
+    return false;
+  }
+
+  if (options?.hasActiveSession) return false;
+
+  if (options?.activeTaskIds) {
+    const activeIds = Array.from(options.activeTaskIds);
+    if (activeIds.includes(task.id)) return false;
+  }
+
+  return (
+    task.status === "pending" ||
+    task.status === "paused" ||
+    task.status === "in_progress"
+  );
+}
+
 type SessionDurationRow = {
   task_id: string;
   start_time: string;
@@ -172,4 +209,4 @@ export async function enrichTasksWithEditedCount(
     };
   });
 }
-
+

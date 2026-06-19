@@ -44,6 +44,9 @@ export default async function DashboardPage({
     ]);
 
   const activeSessions = mapActiveSessionRows(activeSessionsData);
+  const activeTaskIds = new Set(
+    activeSessions.map((session) => session.task_id).filter(Boolean) as string[]
+  );
   const tasks = await enrichTasksWithEditedCount(
     supabase,
     (tasksData || []) as Task[]
@@ -69,7 +72,12 @@ export default async function DashboardPage({
 
       <div>
         <h2 className="mb-4 text-lg font-semibold">Your Tasks</h2>
-        <DashboardTasks tasks={tasks} pagination={pagination} />
+        <DashboardTasks
+          tasks={tasks}
+          pagination={pagination}
+          activeTaskIds={activeTaskIds}
+          currentUserId={user.id}
+        />
       </div>
     </div>
   );
