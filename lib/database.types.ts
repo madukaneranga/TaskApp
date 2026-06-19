@@ -17,8 +17,49 @@ export interface Database {
       problem_status: "open" | "in_progress" | "resolved" | "closed";
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      attach_audit_log_trigger: {
+        Args: { p_table_name: string };
+        Returns: undefined;
+      };
+    };
     Tables: {
+      audit_logs: {
+        Row: {
+          id: string;
+          table_name: string;
+          record_id: string;
+          operation: "INSERT" | "UPDATE" | "DELETE";
+          user_id: string | null;
+          old_data: Json | null;
+          new_data: Json | null;
+          changed_fields: string[] | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          table_name: string;
+          record_id: string;
+          operation: "INSERT" | "UPDATE" | "DELETE";
+          user_id?: string | null;
+          old_data?: Json | null;
+          new_data?: Json | null;
+          changed_fields?: string[] | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          table_name?: string;
+          record_id?: string;
+          operation?: "INSERT" | "UPDATE" | "DELETE";
+          user_id?: string | null;
+          old_data?: Json | null;
+          new_data?: Json | null;
+          changed_fields?: string[] | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       users: {
         Row: {
           id: string;
