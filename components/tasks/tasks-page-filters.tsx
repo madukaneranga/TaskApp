@@ -12,17 +12,29 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { TaskIdRangeFilter } from "@/components/tasks/task-id-range-filter";
-import type { TasksPageFilterParams } from "@/lib/tasks-page-filters";
+import type { TasksDateField, TasksPageFilterParams } from "@/lib/tasks-page-filters";
 import { TASK_STATUS_LABELS, type TaskStatus, type UserOption } from "@/lib/types";
 import { getUserLabel } from "@/lib/user-utils";
 
 interface TasksPageFiltersProps {
+  basePath: "/tasks" | "/admin";
   isAdmin: boolean;
   users: UserOption[];
   filters: TasksPageFilterParams;
 }
 
-export function TasksPageFilters({ isAdmin, users, filters }: TasksPageFiltersProps) {
+const DATE_FIELD_LABELS: Record<TasksDateField, string> = {
+  created: "Created",
+  started: "Started",
+  ended: "Ended",
+};
+
+export function TasksPageFilters({
+  basePath,
+  isAdmin,
+  users,
+  filters,
+}: TasksPageFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -46,6 +58,20 @@ export function TasksPageFilters({ isAdmin, users, filters }: TasksPageFiltersPr
       }
     }
 
+    const taskId = updates.taskId !== undefined ? updates.taskId : filters.taskId?.toString();
+    if (taskId?.trim()) {
+      params.set("taskId", taskId.trim());
+    } else {
+      params.delete("taskId");
+    }
+
+    const dateField = updates.dateField ?? filters.date.field;
+    if (dateField === "created") {
+      params.delete("dateField");
+    } else {
+      params.set("dateField", dateField);
+    }
+
     const range = updates.range ?? filters.date.preset;
     if (range === "all") {
       params.delete("range");
@@ -65,7 +91,7 @@ export function TasksPageFilters({ isAdmin, users, filters }: TasksPageFiltersPr
     }
 
     const qs = params.toString();
-    router.push(qs ? `/tasks?${qs}` : "/tasks");
+    router.push(qs ? `${basePath}?${qs}` : basePath);
   }
 
   return (
@@ -75,6 +101,22 @@ export function TasksPageFilters({ isAdmin, users, filters }: TasksPageFiltersPr
         {isAdmin && <TaskIdRangeFilter />}
       </CardHeader>
       <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="space-y-2">
+          <Label htmlFor="filter-task-id">Task ID</Label>
+          <Input
+            id="filter-task-id"
+            inputMode="numeric"
+            placeholder="e.g. 1000"
+            defaultValue={filters.taskId?.toString() || ""}
+            onBlur={(e) => updateParams({ taskId: e.target.value || undefined })}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                updateParams({ taskId: (e.target as HTMLInputElement).value || undefined });
+              }
+            }}
+          />
+        </div>
+
         <div className="space-y-2">
           <Label>Status</Label>
           <Select
@@ -97,7 +139,7 @@ export function TasksPageFilters({ isAdmin, users, filters }: TasksPageFiltersPr
 
         {isAdmin && (
           <div className="space-y-2">
-            <Label>User</Label>
+            <Label>Assigned to (user code)</Label>
             <Select
               value={filters.userId || "all"}
               onValueChange={(value) =>
@@ -120,7 +162,26 @@ export function TasksPageFilters({ isAdmin, users, filters }: TasksPageFiltersPr
         )}
 
         <div className="space-y-2">
-          <Label>Date</Label>
+          <Label>Date field</Label>
+          <Select
+            value={filters.date.field}
+            onValueChange={(value) => updateParams({ dateField: value })}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {(Object.keys(DATE_FIELD_LABELS) as TasksDateField[]).map((field) => (
+                <SelectItem key={field} value={field}>
+                  {DATE_FIELD_LABELS[field]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label>Date range</Label>
           <Select
             value={filters.date.preset}
             onValueChange={(value) => updateParams({ range: value })}
@@ -144,7 +205,7 @@ export function TasksPageFilters({ isAdmin, users, filters }: TasksPageFiltersPr
               <Label htmlFor="tasks-from">From</Label>
               <Input
                 id="tasks-from"
-                type="date"
+                type="datetime-local"
                 defaultValue={filters.date.from}
                 onChange={(e) =>
                   updateParams({
@@ -159,7 +220,7 @@ export function TasksPageFilters({ isAdmin, users, filters }: TasksPageFiltersPr
               <Label htmlFor="tasks-to">To</Label>
               <Input
                 id="tasks-to"
-                type="date"
+                type="datetime-local"
                 defaultValue={filters.date.to}
                 onChange={(e) =>
                   updateParams({

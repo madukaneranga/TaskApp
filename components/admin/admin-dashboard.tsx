@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useCallback } from "react";
+import { Suspense, useCallback, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { ClipboardList, Clock, CheckCircle, Users } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,7 +20,7 @@ interface AdminDashboardProps {
   tasks: Task[];
   activeSessions: Session[];
   pagination: PaginationMeta;
-  statusFilter: string;
+  filters?: ReactNode;
 }
 
 export function AdminDashboard({
@@ -28,20 +28,12 @@ export function AdminDashboard({
   tasks,
   activeSessions,
   pagination,
-  statusFilter,
+  filters,
 }: AdminDashboardProps) {
   const router = useRouter();
 
   const refresh = useCallback(() => router.refresh(), [router]);
   useRealtime(["tasks", "sessions", "notes"], refresh);
-
-  function handleStatusChange(value: string) {
-    if (value === "all") {
-      router.push("/admin");
-      return;
-    }
-    router.push(`/admin?status=${value}`);
-  }
 
   const statCards = [
     { label: "Total Tasks", value: stats.totalTasks, icon: ClipboardList },
@@ -94,7 +86,7 @@ export function AdminDashboard({
                   <div>
                     <p className="font-medium">{s.user?.user_code}</p>
                     <p className="text-sm text-muted-foreground">
-                      {s.task?.task_name} — {s.task?.client_name}
+                      #{s.task?.task_id} — {s.task?.task_name}
                     </p>
                   </div>
                 </div>
@@ -104,21 +96,10 @@ export function AdminDashboard({
         </CardContent>
       </Card>
 
+      {filters}
+
       <div>
-        <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className="text-lg font-semibold">All Tasks</h2>
-          <select
-            value={statusFilter}
-            onChange={(e) => handleStatusChange(e.target.value)}
-            className="rounded-md border px-3 py-2 text-sm"
-          >
-            <option value="all">All Statuses</option>
-            <option value="pending">Pending</option>
-            <option value="in_progress">In Progress</option>
-            <option value="paused">Paused</option>
-            <option value="completed">Completed</option>
-          </select>
-        </div>
+        <h2 className="mb-4 text-lg font-semibold">All Tasks</h2>
         <div className="space-y-4">
           <TaskTable tasks={tasks} showAssignedTo />
           <Suspense fallback={null}>
