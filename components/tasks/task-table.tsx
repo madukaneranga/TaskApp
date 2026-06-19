@@ -18,21 +18,27 @@ import {
   formatTaskImageCount,
   formatTaskSpanDuration,
   formatTaskWorkDuration,
+  canShowTaskStartAction,
+  getTaskStartActionLabel,
 } from "@/lib/task-utils";
-import type { Task, TaskStatus } from "@/lib/types";
+import type { Task } from "@/lib/types";
 import { getUserLabel } from "@/lib/user-utils";
-
-function getStartActionLabel(status: TaskStatus): string {
-  return status === "paused" ? "Resume" : "Start";
-}
 
 interface TaskTableProps {
   tasks: Task[];
   onStart?: (taskId: string) => void;
   showAssignedTo?: boolean;
+  activeTaskIds?: Iterable<string>;
+  currentUserId?: string;
 }
 
-export function TaskTable({ tasks, onStart, showAssignedTo = true }: TaskTableProps) {
+export function TaskTable({
+  tasks,
+  onStart,
+  showAssignedTo = true,
+  activeTaskIds,
+  currentUserId,
+}: TaskTableProps) {
   if (tasks.length === 0) {
     return (
       <div className="rounded-lg border p-8 text-center text-muted-foreground">
@@ -91,12 +97,13 @@ export function TaskTable({ tasks, onStart, showAssignedTo = true }: TaskTablePr
                         </Link>
                       </Button>
                     </IconTip>
-                    {onStart && (task.status === "pending" || task.status === "paused") && (
-                      <IconTip label={getStartActionLabel(task.status)}>
+                    {onStart &&
+                      canShowTaskStartAction(task, { activeTaskIds, currentUserId }) && (
+                      <IconTip label={getTaskStartActionLabel(task.status)}>
                         <Button
                           variant="ghost"
                           size="icon"
-                          aria-label={getStartActionLabel(task.status)}
+                          aria-label={getTaskStartActionLabel(task.status)}
                           onClick={() => onStart(task.id)}
                         >
                           <Play className="h-4 w-4" />
@@ -135,9 +142,10 @@ export function TaskTable({ tasks, onStart, showAssignedTo = true }: TaskTablePr
               <Button variant="outline" size="sm" asChild>
                 <Link href={`/tasks/${task.id}`}>View</Link>
               </Button>
-              {onStart && (task.status === "pending" || task.status === "paused") && (
+              {onStart &&
+                canShowTaskStartAction(task, { activeTaskIds, currentUserId }) && (
                 <Button size="sm" onClick={() => onStart(task.id)}>
-                  {getStartActionLabel(task.status)}
+                  {getTaskStartActionLabel(task.status)}
                 </Button>
               )}
             </div>

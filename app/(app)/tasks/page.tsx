@@ -79,6 +79,9 @@ export default async function TasksPage({
   ]);
 
   const activeSessions = mapActiveSessionRows(activeSessionsData);
+  const activeTaskIds = new Set(
+    activeSessions.map((session) => session.task_id).filter(Boolean) as string[]
+  );
   const tasks = await enrichTasksWithEditedCount(
     supabase,
     (tasksData || []) as Task[]
@@ -113,6 +116,8 @@ export default async function TasksPage({
             tasks={tasks}
             showAssignedTo={isAdmin}
             pagination={pagination}
+            activeTaskIds={activeTaskIds}
+            currentUserId={user.id}
           />
         </div>
       </div>

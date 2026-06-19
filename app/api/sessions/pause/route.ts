@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { closeAllOpenSegments } from "@/lib/close-open-sessions";
 
 export async function POST(request: Request) {
   try {
@@ -29,26 +31,19 @@ export async function POST(request: Request) {
     }
 
     const now = new Date().toISOString();
+    const segmentClient = force ? createAdminClient() : supabase;
 
-    const { data: openSegment } = await supabase
-      .from("session_segments")
-      .select("*")
-      .eq("session_id", session_id)
-      .is("ended_at", null)
-      .maybeSingle();
+    await closeAllOpenSegments(segmentClient, session_id, now);
 
-    if (openSegment) {
-      await supabase
-        .from("session_segments")
-        .update({ ended_at: now })
-        .eq("id", openSegment.id);
-    }
-
-    await supabase.from("session_segments").insert({
+    const { error: pauseSegmentError } = await segmentClient.from("session_segments").insert({
       session_id,
       type: "pause",
       started_at: now,
     });
+
+    if (pauseSegmentError) {
+      return NextResponse.json({ error: pauseSegmentError.message }, { status: 400 });
+    }
 
     await supabase.from("tasks").update({ status: "paused" }).eq("id", session.task_id);
 

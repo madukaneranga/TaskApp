@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { closeAllOpenSegments } from "@/lib/close-open-sessions";
 import { calculateWorkDuration } from "@/lib/session-utils";
 
 export async function POST(request: Request) {
@@ -27,23 +28,7 @@ export async function POST(request: Request) {
 
     const now = new Date().toISOString();
 
-    const { data: segments } = await supabase
-      .from("session_segments")
-      .select("*")
-      .eq("session_id", session_id);
-
-    const openSegment = segments?.find((s) => !s.ended_at);
-    if (openSegment) {
-      await supabase
-        .from("session_segments")
-        .update({ ended_at: now })
-        .eq("id", openSegment.id);
-    }
-
-    const updatedSegments = segments?.map((s) =>
-      s.id === openSegment?.id ? { ...s, ended_at: now } : s
-    ) || [];
-
+    const updatedSegments = await closeAllOpenSegments(supabase, session_id, now);
     const duration = calculateWorkDuration(updatedSegments);
 
     await supabase

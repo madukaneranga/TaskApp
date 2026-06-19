@@ -10,6 +10,7 @@ import {
   BarChart3,
   LogOut,
   AlertCircle,
+  ScrollText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AppBrand } from "@/components/layout/app-brand";
@@ -38,6 +39,7 @@ const userLinks = [
 const adminLinks = [
   { href: "/admin", label: "Admin Dashboard", icon: LayoutDashboard },
   { href: "/admin/users", label: "Users", icon: Users },
+  { href: "/admin/audit-logs", label: "Audit Log", icon: ScrollText },
   { href: "/problems", label: "Problem Reports", icon: AlertCircle },
   { href: "/reports", label: "Reports", icon: BarChart3 },
   { href: "/tasks", label: "Tasks", icon: ClipboardList },

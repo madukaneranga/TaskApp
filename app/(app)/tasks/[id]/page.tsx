@@ -12,6 +12,7 @@ import {
   computeTaskWorkDurationSeconds,
   formatCompletedDuration,
   formatTaskImageCount,
+  canShowTaskStartAction,
 } from "@/lib/task-utils";
 import {
   buildPaginationMeta,
@@ -187,10 +188,11 @@ export default async function TaskDetailPage({
       }
     : null;
 
-  const canStartOrResume =
-    task.assigned_to === currentUser.id &&
-    (task.status === "pending" || task.status === "paused") &&
-    !sessionForTimer;
+  const canStartOrResume = canShowTaskStartAction(task, {
+    assignedTo: task.assigned_to,
+    currentUserId: currentUser.id,
+    hasActiveSession: !!sessionForTimer,
+  });
 
   return (
     <div className="space-y-6 animate-fade-in">
