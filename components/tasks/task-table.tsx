@@ -22,7 +22,7 @@ import {
   getTaskStartActionLabel,
 } from "@/lib/task-utils";
 import type { Task } from "@/lib/types";
-import { getUserLabel } from "@/lib/user-utils";
+import { formatTaskAssignedTo } from "@/lib/verbal-format";
 
 interface TaskTableProps {
   tasks: Task[];
@@ -77,7 +77,7 @@ export function TaskTable({
                   <StatusBadge status={task.status} />
                 </TableCell>
                 {showAssignedTo && (
-                  <TableCell>{getUserLabel(task.assigned_user)}</TableCell>
+                  <TableCell>{formatTaskAssignedTo(task.assigned_user)}</TableCell>
                 )}
                 <TableCell>{formatDateTime(task.created_at)}</TableCell>
                 <TableCell>{task.start_time ? formatDateTime(task.start_time) : "—"}</TableCell>
@@ -131,7 +131,7 @@ export function TaskTable({
             </div>
             <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
               <span>{formatTaskImageCount(task)} images</span>
-              {showAssignedTo && <span>• {getUserLabel(task.assigned_user)}</span>}
+              {showAssignedTo && <span>• {formatTaskAssignedTo(task.assigned_user)}</span>}
               <span>• Created {formatDateTime(task.created_at)}</span>
               <span>• Start {task.start_time ? formatDateTime(task.start_time) : "—"}</span>
               <span>• Work {formatTaskWorkDuration(task)}</span>

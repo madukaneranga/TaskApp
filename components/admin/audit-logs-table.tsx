@@ -24,6 +24,7 @@ import {
   getAuditTableLabel,
   type AuditLogEntry,
 } from "@/lib/audit-logs";
+import { formatAuditLogSummary } from "@/lib/verbal-format";
 import type { PaginationMeta } from "@/lib/pagination";
 
 interface AuditLogsTableProps {
@@ -66,33 +67,32 @@ export function AuditLogsTable({ logs, actorByUserId, pagination }: AuditLogsTab
           <TableHeader>
             <TableRow>
               <TableHead>When</TableHead>
+              <TableHead>Summary</TableHead>
               <TableHead>Table</TableHead>
               <TableHead>Action</TableHead>
-              <TableHead>User</TableHead>
-              <TableHead>Record</TableHead>
               <TableHead>Changed fields</TableHead>
               <TableHead className="text-right">Details</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {logs.map((log) => (
+            {logs.map((log) => {
+              const actorLabel = log.user_id
+                ? actorByUserId[log.user_id] ?? log.user_id.slice(0, 8)
+                : "System";
+
+              return (
               <TableRow key={log.id}>
                 <TableCell className="whitespace-nowrap">
                   <LocalDateTime value={log.created_at} />
+                </TableCell>
+                <TableCell className="max-w-[320px] font-medium">
+                  {formatAuditLogSummary(log, actorLabel)}
                 </TableCell>
                 <TableCell>{getAuditTableLabel(log.table_name)}</TableCell>
                 <TableCell>
                   <Badge variant={operationVariant(log.operation)}>
                     {AUDIT_OPERATION_LABELS[log.operation]}
                   </Badge>
-                </TableCell>
-                <TableCell>
-                  {log.user_id
-                    ? actorByUserId[log.user_id] ?? log.user_id.slice(0, 8)
-                    : "System"}
-                </TableCell>
-                <TableCell className="font-mono text-xs">
-                  {log.record_id.slice(0, 8)}…
                 </TableCell>
                 <TableCell className="max-w-[220px]">
                   {log.changed_fields?.length ? (
@@ -109,7 +109,8 @@ export function AuditLogsTable({ logs, actorByUserId, pagination }: AuditLogsTab
                   </Button>
                 </TableCell>
               </TableRow>
-            ))}
+              );
+            })}
           </TableBody>
         </Table>
       </div>
@@ -126,6 +127,17 @@ export function AuditLogsTable({ logs, actorByUserId, pagination }: AuditLogsTab
           {selected && (
             <div className="space-y-4 text-sm">
               <dl className="grid gap-2 sm:grid-cols-2">
+                <div className="sm:col-span-2">
+                  <dt className="text-muted-foreground">Summary</dt>
+                  <dd className="font-medium">
+                    {formatAuditLogSummary(
+                      selected,
+                      selected.user_id
+                        ? actorByUserId[selected.user_id] ?? selected.user_id
+                        : "System"
+                    )}
+                  </dd>
+                </div>
                 <div>
                   <dt className="text-muted-foreground">Table</dt>
                   <dd className="font-medium">{getAuditTableLabel(selected.table_name)}</dd>

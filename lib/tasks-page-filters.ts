@@ -68,6 +68,18 @@ function parseDateField(value: string | undefined): TasksDateField {
   return "created";
 }
 
+export function hasActiveTasksPageFilters(
+  filters: TasksPageFilterParams,
+  options?: { isAdmin?: boolean }
+): boolean {
+  if (filters.status !== "all") return true;
+  if (options?.isAdmin && filters.userId) return true;
+  if (filters.taskId != null) return true;
+  if (filters.date.preset !== "all") return true;
+  if (filters.date.field !== "created") return true;
+  return false;
+}
+
 export function parseTasksPageFilters(searchParams: TasksPageSearchParams): TasksPageFilterParams {
   const preset = (["all", "today", "7d", "30d", "custom"].includes(searchParams.range || "")
     ? searchParams.range

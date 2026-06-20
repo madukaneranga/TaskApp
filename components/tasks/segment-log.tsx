@@ -12,10 +12,12 @@ import { computeSegmentDurationSeconds } from "@/lib/session-utils";
 import { formatDuration } from "@/lib/utils";
 import type { SegmentType, SessionSegment } from "@/lib/types";
 import { getUserLabel } from "@/lib/user-utils";
+import { formatSegmentActivity } from "@/lib/verbal-format";
 
 export interface SegmentLogRow {
   id: string;
   userName: string;
+  activity: string;
   sessionStart: string;
   type: SegmentType;
   startedAt: string;
@@ -51,14 +53,17 @@ export function buildSegmentLogRows(sessions: SessionWithSegments[]): SegmentLog
     );
 
     for (const segment of segments) {
+      const userName = getUserLabel(resolveSessionUser(session.user));
+      const durationSeconds = computeSegmentDurationSeconds(segment);
       rows.push({
         id: segment.id,
-        userName: getUserLabel(resolveSessionUser(session.user)),
+        userName,
+        activity: formatSegmentActivity(userName, segment.type, durationSeconds, formatDuration),
         sessionStart: session.start_time,
         type: segment.type,
         startedAt: segment.started_at,
         endedAt: segment.ended_at,
-        durationSeconds: computeSegmentDurationSeconds(segment),
+        durationSeconds,
       });
     }
   }
@@ -86,7 +91,7 @@ export function SegmentLog({ rows }: { rows: SegmentLogRow[] }) {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>User</TableHead>
+            <TableHead>Activity</TableHead>
             <TableHead>Session</TableHead>
             <TableHead>Type</TableHead>
             <TableHead>Started</TableHead>
@@ -97,7 +102,7 @@ export function SegmentLog({ rows }: { rows: SegmentLogRow[] }) {
         <TableBody>
           {rows.map((row) => (
             <TableRow key={row.id}>
-              <TableCell>{row.userName}</TableCell>
+              <TableCell className="font-medium">{row.activity}</TableCell>
               <TableCell>
                 <LocalDateTime value={row.sessionStart} />
               </TableCell>

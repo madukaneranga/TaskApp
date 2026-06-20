@@ -9,6 +9,7 @@ import { Pagination } from "@/components/ui/pagination";
 import { useRealtime } from "@/lib/hooks/useRealtime";
 import type { PaginationMeta } from "@/lib/pagination";
 import type { Session, Task } from "@/lib/types";
+import { formatUserWorkingOnTask } from "@/lib/verbal-format";
 
 interface AdminDashboardProps {
   stats: {
@@ -82,13 +83,16 @@ export function AdminDashboard({
                   key={s.id}
                   className="flex items-center gap-3 rounded-md border p-3"
                 >
-                  <span className="h-2 w-2 rounded-full bg-green-500" />
-                  <div>
-                    <p className="font-medium">{s.user?.user_code}</p>
-                    <p className="text-sm text-muted-foreground">
-                      #{s.task?.task_id} — {s.task?.task_name}
-                    </p>
-                  </div>
+                  <span
+                    className={`h-2 w-2 shrink-0 rounded-full ${
+                      s.task?.status === "paused" ? "bg-amber-500" : "bg-green-500"
+                    }`}
+                  />
+                  <p className="text-sm">
+                    {formatUserWorkingOnTask(s.user, s.task, {
+                      paused: s.task?.status === "paused",
+                    })}
+                  </p>
                 </div>
               ))}
             </div>
