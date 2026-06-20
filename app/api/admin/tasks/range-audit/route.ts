@@ -51,7 +51,9 @@ export async function GET(request: Request) {
 
     const { data: tasks, error } = await supabase
       .from("tasks")
-      .select("id, task_id, task_name, status, assigned_user:users!tasks_assigned_to_fkey(user_code)")
+      .select(
+        "id, task_id, task_name, status, total_images_count, assigned_user:users!tasks_assigned_to_fkey(user_code)"
+      )
       .gte("task_id", from)
       .lte("task_id", to)
       .order("task_id", { ascending: true });
@@ -60,18 +62,42 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
+    const taskRows = tasks || [];
+    const taskIds = taskRows.map((task) => task.id);
+    const editedByTask = new Map<string, number>();
+
+    if (taskIds.length > 0) {
+      const { data: sessions } = await supabase
+        .from("sessions")
+        .select("task_id, edited_images_count")
+        .in("task_id", taskIds);
+
+      for (const session of sessions || []) {
+        if (
+          !editedByTask.has(session.task_id) &&
+          session.edited_images_count != null
+        ) {
+          editedByTask.set(session.task_id, session.edited_images_count);
+        }
+      }
+    }
+
     const audit = auditTaskIdRange(
       parsedRange.range,
-      (tasks || []).map((task) => {
+      taskRows.map((task) => {
         const assignedUser = Array.isArray(task.assigned_user)
           ? task.assigned_user[0]
           : task.assigned_user;
+        const status = task.status as TaskStatus;
 
         return {
           id: task.id,
           task_id: task.task_id,
           task_name: task.task_name,
-          status: task.status as TaskStatus,
+          status,
+          total_images_count: task.total_images_count,
+          edited_images_count:
+            status === "completed" ? editedByTask.get(task.id) ?? null : null,
           assigned_user: assignedUser ?? null,
         };
       }),
