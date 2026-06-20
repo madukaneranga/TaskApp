@@ -140,6 +140,13 @@ export function parseTaskId(value: unknown): number | null {
   return Number(normalized);
 }
 
+export function parseImageCount(value: unknown): number | null {
+  if (value == null || value === "") return null;
+  const n = typeof value === "number" ? value : parseInt(String(value).trim(), 10);
+  if (!Number.isFinite(n) || n < 1) return null;
+  return n;
+}
+
 export function formatTaskImageCount(task: Pick<Task, "status" | "total_images_count" | "edited_images_count">): string {
   if (task.status === "completed" && task.edited_images_count != null) {
     return `${task.edited_images_count}/${task.total_images_count}`;

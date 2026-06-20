@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { closeOpenSessionsForTask } from "@/lib/close-open-sessions";
-import { parseTaskId } from "@/lib/task-utils";
+import { parseImageCount, parseTaskId } from "@/lib/task-utils";
 import type { TaskStatus } from "@/lib/types";
 
 const VALID_STATUSES: TaskStatus[] = ["pending", "in_progress", "paused", "completed"];
@@ -75,11 +75,16 @@ export async function PATCH(
       }
     }
 
+    const parsedImageCount = parseImageCount(total_images_count);
+    if (parsedImageCount === null) {
+      return NextResponse.json({ error: "Total images must be at least 1" }, { status: 400 });
+    }
+
     const updates: Record<string, unknown> = {
       task_id: parsedTaskId,
       task_name: task_name.trim(),
       client_name: client_name.trim(),
-      total_images_count: parseInt(total_images_count) || 0,
+      total_images_count: parsedImageCount,
     };
 
     if (assigned_to) updates.assigned_to = assigned_to;

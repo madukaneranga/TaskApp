@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toastError } from "@/lib/toast-helpers";
+import { parseImageCount } from "@/lib/task-utils";
 
 interface SubmitModalProps {
   open: boolean;
@@ -35,6 +36,18 @@ export function SubmitModal({
   const [loading, setLoading] = useState(false);
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+
+    const editedImages = parseImageCount(editedCount);
+    if (editedImages === null) {
+      toastError("Invalid image count", "Edited images must be at least 1.");
+      return;
+    }
+
+    if (editedImages > totalImages) {
+      toastError("Invalid image count", `Edited images cannot exceed ${totalImages}.`);
+      return;
+    }
+
     setLoading(true);
 
     const res = await fetch("/api/sessions/submit", {
@@ -42,7 +55,7 @@ export function SubmitModal({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         session_id: sessionId,
-        edited_images_count: parseInt(editedCount) || 0,
+        edited_images_count: editedImages,
         notes,
       }),
     });
@@ -77,7 +90,7 @@ export function SubmitModal({
             <Input
               id="editedCount"
               type="number"
-              min="0"
+              min="1"
               max={totalImages}
               value={editedCount}
               onChange={(e) => setEditedCount(e.target.value)}

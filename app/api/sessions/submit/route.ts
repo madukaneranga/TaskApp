@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { closeAllOpenSegments } from "@/lib/close-open-sessions";
 import { calculateWorkDuration } from "@/lib/session-utils";
+import { parseImageCount } from "@/lib/task-utils";
 
 export async function POST(request: Request) {
   try {
@@ -26,6 +27,28 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Session not found" }, { status: 404 });
     }
 
+    const parsedEditedCount = parseImageCount(edited_images_count);
+    if (parsedEditedCount === null) {
+      return NextResponse.json({ error: "Edited images must be at least 1" }, { status: 400 });
+    }
+
+    const { data: task } = await supabase
+      .from("tasks")
+      .select("total_images_count")
+      .eq("id", session.task_id)
+      .single();
+
+    if (!task) {
+      return NextResponse.json({ error: "Task not found" }, { status: 404 });
+    }
+
+    if (parsedEditedCount > task.total_images_count) {
+      return NextResponse.json(
+        { error: "Edited images cannot exceed total images" },
+        { status: 400 }
+      );
+    }
+
     const now = new Date().toISOString();
 
     const updatedSegments = await closeAllOpenSegments(supabase, session_id, now);
@@ -36,7 +59,7 @@ export async function POST(request: Request) {
       .update({
         end_time: now,
         duration,
-        edited_images_count,
+        edited_images_count: parsedEditedCount,
       })
       .eq("id", session_id);
 
