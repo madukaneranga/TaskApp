@@ -94,15 +94,7 @@ export function TasksPageFilters({
 
   useEffect(() => {
     setDraft(draftFromFilters(filters));
-  }, [
-    filters.status,
-    filters.userId,
-    filters.taskId,
-    filters.date.field,
-    filters.date.preset,
-    filters.date.from,
-    filters.date.to,
-  ]);
+  }, [filters]);
 
   function applyDraft(nextDraft: FilterDraft) {
     const params = new URLSearchParams();

@@ -189,11 +189,9 @@ export async function getTaskIdsForSessionDateFilter(
 
 export async function applyTasksPageFiltersToQuery(
   supabase: SupabaseClient,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   query: any,
   filters: TasksPageFilterParams,
   options?: { restrictToUserId?: string }
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<any> {
   let nextQuery = query;
 
