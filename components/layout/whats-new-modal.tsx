@@ -25,6 +25,8 @@ export function WhatsNewModal({ userId }: WhatsNewModalProps) {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
+    if (WHATS_NEW_ITEMS.length === 0) return;
+
     const storageKey = getWhatsNewStorageKey(userId);
     const seenVersion = localStorage.getItem(storageKey);
 
@@ -32,6 +34,10 @@ export function WhatsNewModal({ userId }: WhatsNewModalProps) {
       setOpen(true);
     }
   }, [userId]);
+
+  if (WHATS_NEW_ITEMS.length === 0) {
+    return null;
+  }
 
   function dismiss() {
     localStorage.setItem(getWhatsNewStorageKey(userId), WHATS_NEW_VERSION);
