@@ -13,6 +13,8 @@ export interface TaskIdRangeAuditRow {
   task_id: number;
   task_name: string;
   status: TaskStatus;
+  total_images_count: number;
+  edited_images_count: number | null;
   assigned_user?: { user_code: string } | null;
 }
 
@@ -33,6 +35,8 @@ export interface TaskIdRangeAuditResult {
   missingNumbers: number[];
   missingGroups: string[];
   statusCounts: Record<TaskStatus, number>;
+  totalImagesFound: number;
+  totalImagesEdited: number;
   tasks: TaskIdRangeAuditTask[];
 }
 
@@ -163,8 +167,13 @@ export function auditTaskIdRange(
   const includedTasks = tasks.filter((task) => !exceptSet.has(task.task_id));
 
   const statusCounts = { ...EMPTY_STATUS_COUNTS };
+  let totalImagesFound = 0;
+  let totalImagesEdited = 0;
+
   for (const task of includedTasks) {
     statusCounts[task.status] += 1;
+    totalImagesFound += task.total_images_count;
+    totalImagesEdited += task.edited_images_count ?? 0;
   }
 
   const sortedTasks = [...tasks]
@@ -187,6 +196,8 @@ export function auditTaskIdRange(
     missingNumbers,
     missingGroups: groupConsecutiveNumbers(missingNumbers),
     statusCounts,
+    totalImagesFound,
+    totalImagesEdited,
     tasks: sortedTasks,
   };
 }

@@ -14,7 +14,7 @@ import {
   YAxis,
 } from "recharts";
 import { Download, FileSpreadsheet, FileText } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,11 +35,15 @@ import {
 } from "@/components/ui/table";
 import { StatusBadge } from "@/components/tasks/status-badge";
 import {
+  exportFullReportCsv,
+  exportFullReportExcel,
   exportReportPdf,
   exportTasksCsv,
   exportTasksExcel,
+  exportTasksPdf,
   exportUserSummaryCsv,
   exportUserSummaryExcel,
+  exportUserSummaryPdf,
 } from "@/lib/report-exports";
 import type { ReportParams, ReportSummary, ReportTaskRow, ReportUserRow } from "@/lib/reports";
 import { formatCompletedDuration } from "@/lib/task-utils";
@@ -69,6 +73,38 @@ function formatRangeLabel(params: ReportParams): string {
     year: "numeric",
   });
   return `${from} – ${to}`;
+}
+
+const sectionHeaderClass = "flex flex-row flex-wrap items-center justify-between gap-3 space-y-0";
+
+const exportButtonClass =
+  "text-white shadow-sm hover:opacity-90 focus-visible:ring-offset-background";
+
+function ReportSectionExports({
+  onCsv,
+  onExcel,
+  onPdf,
+}: {
+  onCsv: () => void;
+  onExcel: () => void;
+  onPdf: () => void;
+}) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      <Button size="sm" className={`${exportButtonClass} bg-emerald-600`} onClick={onCsv}>
+        <Download className="mr-2 h-4 w-4" />
+        CSV
+      </Button>
+      <Button size="sm" className={`${exportButtonClass} bg-green-700`} onClick={onExcel}>
+        <FileSpreadsheet className="mr-2 h-4 w-4" />
+        Excel
+      </Button>
+      <Button size="sm" className={`${exportButtonClass} bg-brand-blue`} onClick={onPdf}>
+        <FileText className="mr-2 h-4 w-4" />
+        PDF
+      </Button>
+    </div>
+  );
 }
 
 export function ReportsView({
@@ -117,10 +153,21 @@ export function ReportsView({
   const pdfSummary = [
     { label: "Completed", value: String(summary.completed) },
     { label: "In Progress", value: String(summary.inProgress) },
+    { label: "Paused", value: String(summary.paused) },
     { label: "Pending", value: String(summary.pending) },
     { label: "Total Hours", value: String(summary.totalHours) },
     { label: "Images Edited", value: String(summary.imagesEdited) },
+    { label: "Total Images", value: String(summary.totalImages) },
   ];
+
+  const fullReportExportOptions = {
+    periodLabel,
+    summary: pdfSummary,
+    taskRows,
+    userRows,
+  };
+
+  const fullReportTitle = isAdmin ? "Team Report" : "My Report";
 
   return (
     <div className="space-y-6">
@@ -263,8 +310,21 @@ export function ReportsView({
       )}
 
       <Card>
-        <CardHeader>
+        <CardHeader className={sectionHeaderClass}>
           <CardTitle className="text-lg">User Summary</CardTitle>
+          {userRows.length > 0 && (
+            <ReportSectionExports
+              onCsv={() => exportUserSummaryCsv(userRows)}
+              onExcel={() => exportUserSummaryExcel(userRows)}
+              onPdf={() =>
+                exportUserSummaryPdf({
+                  title: isAdmin ? "Team User Summary" : "My User Summary",
+                  periodLabel,
+                  userRows,
+                })
+              }
+            />
+          )}
         </CardHeader>
         <CardContent>
           {userRows.length === 0 ? (
@@ -323,8 +383,21 @@ export function ReportsView({
       )}
 
       <Card>
-        <CardHeader>
+        <CardHeader className={sectionHeaderClass}>
           <CardTitle className="text-lg">Task Detail</CardTitle>
+          {taskRows.length > 0 && (
+            <ReportSectionExports
+              onCsv={() => exportTasksCsv(taskRows)}
+              onExcel={() => exportTasksExcel(taskRows)}
+              onPdf={() =>
+                exportTasksPdf({
+                  title: isAdmin ? "Team Task Detail" : "My Task Detail",
+                  periodLabel,
+                  taskRows,
+                })
+              }
+            />
+          )}
         </CardHeader>
         <CardContent>
           {taskRows.length === 0 ? (
@@ -419,41 +492,43 @@ export function ReportsView({
       </Card>
 
       <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Export</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={() => exportTasksCsv(taskRows)}>
-            <Download className="mr-2 h-4 w-4" />
-            Tasks CSV
-          </Button>
-          <Button variant="outline" onClick={() => exportUserSummaryCsv(userRows)}>
-            <Download className="mr-2 h-4 w-4" />
-            User Summary CSV
-          </Button>
-          <Button variant="outline" onClick={() => exportTasksExcel(taskRows)}>
-            <FileSpreadsheet className="mr-2 h-4 w-4" />
-            Tasks Excel
-          </Button>
-          <Button variant="outline" onClick={() => exportUserSummaryExcel(userRows)}>
-            <FileSpreadsheet className="mr-2 h-4 w-4" />
-            User Summary Excel
-          </Button>
-          <Button
-            className="bg-brand-blue"
-            onClick={() =>
+        <CardHeader className={sectionHeaderClass}>
+          <div className="space-y-1">
+            <CardTitle className="text-lg">Full Report</CardTitle>
+            <CardDescription>
+              Download everything for {periodLabel} in one file — overview stats, user summary, and
+              task detail.
+            </CardDescription>
+          </div>
+          <ReportSectionExports
+            onCsv={() => exportFullReportCsv(fullReportExportOptions)}
+            onExcel={() => exportFullReportExcel(fullReportExportOptions)}
+            onPdf={() =>
               exportReportPdf({
-                title: isAdmin ? "Team Report" : "My Report",
+                title: fullReportTitle,
                 periodLabel,
                 summary: pdfSummary,
                 taskRows,
                 userRows,
               })
             }
-          >
-            <FileText className="mr-2 h-4 w-4" />
-            Download PDF
-          </Button>
+          />
+        </CardHeader>
+        <CardContent>
+          <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
+            <li>
+              <span className="font-medium text-foreground">Overview</span> — completed, in progress,
+              paused, pending, hours, and images for the selected filters
+            </li>
+            <li>
+              <span className="font-medium text-foreground">User summary</span> — per-user task counts,
+              hours worked, and images edited
+            </li>
+            <li>
+              <span className="font-medium text-foreground">Task detail</span> — each task with status,
+              assignment, timings, and image counts
+            </li>
+          </ul>
         </CardContent>
       </Card>
     </div>

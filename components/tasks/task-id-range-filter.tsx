@@ -20,9 +20,20 @@ import { StatusBadge } from "@/components/tasks/status-badge";
 import { toastError } from "@/lib/toast-helpers";
 import type { TaskIdRangeAuditResult } from "@/lib/task-id-range-audit";
 import { MAX_TASK_ID_RANGE_SIZE } from "@/lib/task-id-range-audit";
+import { formatTaskImageCount } from "@/lib/task-utils";
 import type { TaskStatus } from "@/lib/types";
 
 const STATUS_ORDER: TaskStatus[] = ["pending", "in_progress", "paused", "completed"];
+
+function getSharePercent(value: number, total: number): number {
+  if (total <= 0) return 0;
+  return (value / total) * 100;
+}
+
+function formatSharePercent(value: number, total: number): string | null {
+  if (total <= 0) return null;
+  return `${getSharePercent(value, total).toFixed(1)}%`;
+}
 
 export function TaskIdRangeFilter() {
   const [open, setOpen] = useState(false);
@@ -123,16 +134,44 @@ export function TaskIdRangeFilter() {
 
         {audit && (
           <div className="space-y-4">
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4">
               <SummaryCard label="Range" value={`${audit.from} – ${audit.to}`} />
               <SummaryCard label="Total numbers" value={String(audit.totalInRange)} />
               <SummaryCard label="Except" value={String(audit.exceptCount)} />
               <SummaryCard label="Expected" value={String(audit.expectedCount)} />
-              <SummaryCard label="Found" value={String(audit.foundCount)} />
+              <SummaryCard
+                label="Found"
+                value={String(audit.foundCount)}
+                percent={formatSharePercent(audit.foundCount, audit.expectedCount) ?? "0%"}
+                percentLabel="of expected"
+                highlight={
+                  getSharePercent(audit.foundCount, audit.expectedCount) > 30 ? "success" : "danger"
+                }
+              />
               <SummaryCard
                 label="Missing"
                 value={String(audit.missingCount)}
+                percent={
+                  audit.expectedCount > 0
+                    ? formatSharePercent(audit.missingCount, audit.expectedCount)
+                    : "0%"
+                }
+                percentLabel="of expected"
                 highlight={audit.missingCount > 0 ? "warning" : "success"}
+              />
+              <SummaryCard
+                label="Total images found"
+                value={String(audit.totalImagesFound)}
+              />
+              <SummaryCard
+                label="Edited images"
+                value={String(audit.totalImagesEdited)}
+                percent={
+                  audit.totalImagesFound > 0
+                    ? formatSharePercent(audit.totalImagesEdited, audit.totalImagesFound)
+                    : "0%"
+                }
+                percentLabel="of total images"
               />
             </div>
 
@@ -188,6 +227,7 @@ export function TaskIdRangeFilter() {
                         <th className="px-4 py-2 font-medium">Name</th>
                         <th className="px-4 py-2 font-medium">Status</th>
                         <th className="px-4 py-2 font-medium">Assigned</th>
+                        <th className="px-4 py-2 font-medium">Images</th>
                         <th className="px-4 py-2 font-medium" />
                       </tr>
                     </thead>
@@ -213,6 +253,9 @@ export function TaskIdRangeFilter() {
                           </td>
                           <td className="px-4 py-2 text-muted-foreground">
                             {task.assigned_user?.user_code || "—"}
+                          </td>
+                          <td className="px-4 py-2 font-mono">
+                            {formatTaskImageCount(task)}
                           </td>
                           <td className="px-4 py-2 text-right">
                             <Button variant="link" size="sm" className="h-auto p-0" asChild>
@@ -245,26 +288,44 @@ export function TaskIdRangeFilter() {
 function SummaryCard({
   label,
   value,
+  percent,
+  percentLabel,
   highlight,
 }: {
   label: string;
   value: string;
-  highlight?: "warning" | "success";
+  percent?: string | null;
+  percentLabel?: string;
+  highlight?: "warning" | "success" | "danger";
 }) {
+  const valueClass =
+    highlight === "warning"
+      ? "text-lg font-semibold text-amber-700 dark:text-amber-300"
+      : highlight === "success"
+        ? "text-lg font-semibold text-green-700 dark:text-green-300"
+        : highlight === "danger"
+          ? "text-lg font-semibold text-red-700 dark:text-red-300"
+          : "text-lg font-semibold";
+
+  const percentClass =
+    highlight === "warning"
+      ? "text-xs text-amber-700 dark:text-amber-300"
+      : highlight === "success"
+        ? "text-xs text-green-700 dark:text-green-300"
+        : highlight === "danger"
+          ? "text-xs text-red-700 dark:text-red-300"
+          : "text-xs text-muted-foreground";
+
   return (
     <div className="rounded-lg border p-3">
       <p className="text-xs text-muted-foreground">{label}</p>
-      <p
-        className={
-          highlight === "warning"
-            ? "text-lg font-semibold text-amber-700 dark:text-amber-300"
-            : highlight === "success"
-              ? "text-lg font-semibold text-green-700 dark:text-green-300"
-              : "text-lg font-semibold"
-        }
-      >
-        {value}
-      </p>
+      <p className={valueClass}>{value}</p>
+      {percent != null && (
+        <p className={percentClass}>
+          {percent}
+          {percentLabel ? ` ${percentLabel}` : ""}
+        </p>
+      )}
     </div>
   );
 }
