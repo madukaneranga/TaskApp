@@ -3,13 +3,14 @@
 import { Suspense, useCallback, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { ClipboardList, Clock, CheckCircle, Users } from "lucide-react";
+import { AdminActiveTasksPanel } from "@/components/admin/admin-active-tasks-panel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TaskTable } from "@/components/tasks/task-table";
 import { Pagination } from "@/components/ui/pagination";
 import { useRealtime } from "@/lib/hooks/useRealtime";
 import type { PaginationMeta } from "@/lib/pagination";
-import type { Session, Task } from "@/lib/types";
-import { formatUserWorkingOnTask } from "@/lib/verbal-format";
+import type { ActiveSession } from "@/lib/session-mapper";
+import type { Task } from "@/lib/types";
 
 interface AdminDashboardProps {
   stats: {
@@ -19,7 +20,7 @@ interface AdminDashboardProps {
     hoursToday: number;
   };
   tasks: Task[];
-  activeSessions: Session[];
+  activeSessions: ActiveSession[];
   pagination: PaginationMeta;
   filters?: ReactNode;
 }
@@ -69,36 +70,7 @@ export function AdminDashboard({
         })}
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Working on Tasks Now</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {activeSessions.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No one is currently working.</p>
-          ) : (
-            <div className="space-y-2">
-              {activeSessions.map((s) => (
-                <div
-                  key={s.id}
-                  className="flex items-center gap-3 rounded-md border p-3"
-                >
-                  <span
-                    className={`h-2 w-2 shrink-0 rounded-full ${
-                      s.task?.status === "paused" ? "bg-amber-500" : "bg-green-500"
-                    }`}
-                  />
-                  <p className="text-sm">
-                    {formatUserWorkingOnTask(s.user, s.task, {
-                      paused: s.task?.status === "paused",
-                    })}
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <AdminActiveTasksPanel sessions={activeSessions} />
 
       {filters}
 
