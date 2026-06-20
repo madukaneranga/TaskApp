@@ -17,7 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProblemStatusBadge } from "@/components/problems/problem-status-badge";
 import { formatDateTime } from "@/lib/utils";
 import { toastError, toastSuccess } from "@/lib/toast-helpers";
-import { getUserLabel } from "@/lib/user-utils";
+import { formatProblemReported } from "@/lib/verbal-format";
 import {
   PROBLEM_STATUS_LABELS,
   type ProblemReport,
@@ -139,7 +139,7 @@ export function ProblemsView({ reports, isAdmin }: ProblemsViewProps) {
                       <p className="text-xs text-muted-foreground">
                         {formatDateTime(report.created_at)}
                         {isAdmin && report.user && (
-                          <> · {getUserLabel(report.user)}</>
+                          <> · {formatProblemReported(report.user)}</>
                         )}
                       </p>
                     </div>

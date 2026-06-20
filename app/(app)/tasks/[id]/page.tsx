@@ -35,7 +35,11 @@ import { TaskStartResumeButton } from "@/components/tasks/task-start-resume-butt
 import { SegmentLog, buildSegmentLogRows } from "@/components/tasks/segment-log";
 import { getSessionElapsedSeconds } from "@/lib/session-mapper";
 import type { Note, Session, SessionSegment, StatusHistoryEntry, Task, User } from "@/lib/types";
-import { getUserLabel } from "@/lib/user-utils";
+import {
+  formatSessionActivity,
+  formatStatusChange,
+  formatTaskAssignedTo,
+} from "@/lib/verbal-format";
 
 export default async function TaskDetailPage({
   params,
@@ -189,7 +193,6 @@ export default async function TaskDetailPage({
     : null;
 
   const canStartOrResume = canShowTaskStartAction(task, {
-    assignedTo: task.assigned_to,
     currentUserId: currentUser.id,
     hasActiveSession: !!sessionForTimer,
   });
@@ -249,7 +252,7 @@ export default async function TaskDetailPage({
             <CardTitle className="text-sm font-medium text-muted-foreground">Assigned To</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-lg font-semibold">{getUserLabel(task.assigned_user)}</p>
+            <p className="text-lg font-semibold">{formatTaskAssignedTo(task.assigned_user, task)}</p>
           </CardContent>
         </Card>
         <Card>
@@ -322,7 +325,7 @@ export default async function TaskDetailPage({
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>User</TableHead>
+                    <TableHead>Activity</TableHead>
                     <TableHead>Start</TableHead>
                     <TableHead>End</TableHead>
                     <TableHead>Work</TableHead>
@@ -333,7 +336,14 @@ export default async function TaskDetailPage({
                 <TableBody>
                   {sessions.map((s) => (
                     <TableRow key={s.id}>
-                      <TableCell>{getUserLabel(s.user)}</TableCell>
+                      <TableCell className="font-medium">
+                        {formatSessionActivity(s.user, task, {
+                          active: !s.end_time,
+                          workDuration: s.end_time
+                            ? formatCompletedDuration(s.duration)
+                            : null,
+                        })}
+                      </TableCell>
                       <TableCell>
                         <LocalDateTime value={s.start_time} />
                       </TableCell>
@@ -378,10 +388,7 @@ export default async function TaskDetailPage({
                   <span className="text-muted-foreground">
                     <LocalDateTime value={h.changed_at} />
                   </span>
-                  <span>
-                    {h.old_status || "—"} → {h.new_status}
-                  </span>
-                  <span className="text-muted-foreground">by {getUserLabel(h.changed_by_user)}</span>
+                  <span>{formatStatusChange(h, h.changed_by_user)}</span>
                 </div>
               ))}
             </div>

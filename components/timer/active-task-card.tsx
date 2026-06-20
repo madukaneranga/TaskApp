@@ -12,6 +12,7 @@ import { formatDuration } from "@/lib/utils";
 import { isSessionActive } from "@/lib/session-utils";
 import { toastError, toastSuccess } from "@/lib/toast-helpers";
 import type { Session, Task } from "@/lib/types";
+import { formatYouWorkingOnTask } from "@/lib/verbal-format";
 
 interface ActiveTaskCardProps {
   session: Session | null;
@@ -71,7 +72,10 @@ export function ActiveTaskCard({ session, task, initialElapsed = 0 }: ActiveTask
       <Card className="border-l-4 border-l-brand-blue">
         <CardContent className="flex flex-col gap-4 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <div className="flex items-center gap-2">
+            <p className="text-sm text-muted-foreground">
+              {formatYouWorkingOnTask(task, { paused: isPaused })}
+            </p>
+            <div className="mt-1 flex items-center gap-2">
               <h3 className="font-semibold">{task.task_name}</h3>
               <StatusBadge status={task.status} />
             </div>

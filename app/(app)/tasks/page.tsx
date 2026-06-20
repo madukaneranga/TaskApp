@@ -11,21 +11,18 @@ import {
   PAGE_SIZE,
   parsePageParam,
 } from "@/lib/pagination";
-import { parseTasksPageFilters } from "@/lib/tasks-page-filters";
+import {
+  applyTasksPageFiltersToQuery,
+  parseTasksPageFilters,
+  type TasksPageSearchParams,
+} from "@/lib/tasks-page-filters";
 import { enrichTasksWithEditedCount } from "@/lib/task-utils";
-import type { Task, TaskStatus, UserOption } from "@/lib/types";
+import type { Task, UserOption } from "@/lib/types";
 
 export default async function TasksPage({
   searchParams,
 }: {
-  searchParams: {
-    page?: string;
-    status?: string;
-    user?: string;
-    range?: string;
-    from?: string;
-    to?: string;
-  };
+  searchParams: TasksPageSearchParams;
 }) {
   const user = await requireUser();
   const supabase = createClient();
@@ -34,30 +31,20 @@ export default async function TasksPage({
   const { from, to } = getPaginationRange(page);
   const isAdmin = user.role === "admin";
 
-  let tasksQuery = supabase
-    .from("tasks")
-    .select("*, assigned_user:users!tasks_assigned_to_fkey(id, user_code)", {
-      count: "exact",
-    })
-    .order("task_id", { ascending: false })
-    .range(from, to);
-
-  if (!isAdmin) {
-    tasksQuery = tasksQuery.eq("assigned_to", user.id);
-  } else if (filters.userId) {
-    tasksQuery = tasksQuery.eq("assigned_to", filters.userId);
-  }
-
-  if (filters.status !== "all") {
-    tasksQuery = tasksQuery.eq("status", filters.status as TaskStatus);
-  }
-
-  if (filters.date.fromIso) {
-    tasksQuery = tasksQuery.gte("created_at", filters.date.fromIso);
-  }
-  if (filters.date.toIso) {
-    tasksQuery = tasksQuery.lte("created_at", filters.date.toIso);
-  }
+  const tasksQuery = await applyTasksPageFiltersToQuery(
+    supabase,
+    supabase
+      .from("tasks")
+      .select("*, assigned_user:users!tasks_assigned_to_fkey(id, user_code)", {
+        count: "exact",
+      })
+      .order("task_id", { ascending: false })
+      .range(from, to),
+    filters,
+    {
+      restrictToUserId: isAdmin ? undefined : user.id,
+    }
+  );
 
   const usersQuery = isAdmin
     ? supabase.from("users").select("id, user_code").eq("status", "active").order("user_code")
@@ -102,6 +89,7 @@ export default async function TasksPage({
       <div className="space-y-4">
         <Suspense fallback={null}>
           <TasksPageFilters
+            basePath="/tasks"
             isAdmin={isAdmin}
             users={(usersData || []) as UserOption[]}
             filters={filters}
@@ -124,4 +112,3 @@ export default async function TasksPage({
     </div>
   );
 }
-

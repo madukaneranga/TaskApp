@@ -22,9 +22,8 @@ export function getTaskStartActionLabel(status: TaskStatus): string {
 }
 
 export function canShowTaskStartAction(
-  task: Pick<Task, "id" | "status">,
+  task: Pick<Task, "id" | "status" | "assigned_to">,
   options?: {
-    assignedTo?: string;
     currentUserId?: string;
     hasActiveSession?: boolean;
     activeTaskIds?: Iterable<string>;
@@ -33,9 +32,9 @@ export function canShowTaskStartAction(
   if (task.status === "completed") return false;
 
   if (
-    options?.assignedTo &&
-    options.currentUserId &&
-    options.assignedTo !== options.currentUserId
+    task.assigned_to &&
+    options?.currentUserId &&
+    task.assigned_to !== options.currentUserId
   ) {
     return false;
   }
