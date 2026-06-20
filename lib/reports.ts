@@ -159,6 +159,50 @@ function isInRange(iso: string | null | undefined, from: Date, to: Date): boolea
   return t >= from.getTime() && t <= to.getTime();
 }
 
+export function getTodayDateRange(now = new Date()): { from: Date; to: Date } {
+  return { from: startOfDay(now), to: endOfDay(now) };
+}
+
+export function sumSessionHoursInRange(
+  sessions: Pick<SessionRow, "start_time" | "end_time" | "duration">[],
+  from: Date,
+  to: Date
+): number {
+  const seconds = sessions.reduce((sum, session) => {
+    const touchesRange =
+      isInRange(session.start_time, from, to) ||
+      isInRange(session.end_time, from, to);
+    if (!touchesRange || !session.end_time) return sum;
+    return sum + (session.duration || 0);
+  }, 0);
+  return Math.round((seconds / 3600) * 10) / 10;
+}
+
+export function countCompletedTasksInRange(
+  tasks: Array<{ id: string; status: TaskStatus }>,
+  sessions: Pick<SessionRow, "task_id" | "end_time">[],
+  from: Date,
+  to: Date
+): number {
+  let count = 0;
+
+  for (const task of tasks) {
+    if (task.status !== "completed") continue;
+
+    let endTime: string | null = null;
+    for (const session of sessions) {
+      if (session.task_id !== task.id || !session.end_time) continue;
+      if (!endTime || session.end_time > endTime) {
+        endTime = session.end_time;
+      }
+    }
+
+    if (isInRange(endTime, from, to)) count++;
+  }
+
+  return count;
+}
+
 function taskTouchesRange(task: EnrichedReportTask, from: Date, to: Date): boolean {
   return (
     isInRange(task.created_at, from, to) ||
