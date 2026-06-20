@@ -32,6 +32,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EditTaskButton } from "@/components/admin/edit-task-button";
 import { ForcePauseButton } from "@/components/admin/force-pause-button";
 import { TaskStartResumeButton } from "@/components/tasks/task-start-resume-button";
+import { TaskIdJump } from "@/components/tasks/task-id-jump";
 import { SegmentLog, buildSegmentLogRows } from "@/components/tasks/segment-log";
 import { getSessionElapsedSeconds } from "@/lib/session-mapper";
 import type { Note, Session, SessionSegment, StatusHistoryEntry, Task, User } from "@/lib/types";
@@ -146,6 +147,23 @@ export default async function TaskDetailPage({
 
   if (!taskData) notFound();
 
+  const [{ data: previousTaskData }, { data: nextTaskData }] = await Promise.all([
+    supabase
+      .from("tasks")
+      .select("id, task_id, task_name")
+      .lt("task_id", taskData.task_id)
+      .order("task_id", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from("tasks")
+      .select("id, task_id, task_name")
+      .gt("task_id", taskData.task_id)
+      .order("task_id", { ascending: true })
+      .limit(1)
+      .maybeSingle(),
+  ]);
+
   let activeUsers: User[] = [];
   if (currentUser.role === "admin") {
     const { data: usersData } = await supabase
@@ -201,8 +219,17 @@ export default async function TaskDetailPage({
     <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="font-mono text-sm text-muted-foreground">{task.task_id}</p>
-          <h1 className="text-2xl font-bold">{task.task_name}</h1>
+          <TaskIdJump
+            currentTaskId={task.task_id}
+            previousTask={previousTaskData}
+            nextTask={nextTaskData}
+          />
+          <h1 className="mt-3 text-2xl font-bold">{task.task_name}</h1>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Viewing task{" "}
+            <span className="font-mono font-medium text-foreground">#{task.task_id}</span>. Arrows
+            go to the nearest existing task ID, or enter any ID to jump directly.
+          </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <StatusBadge status={task.status} />

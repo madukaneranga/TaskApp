@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/select";
 import { TaskNameSelect } from "@/components/tasks/task-name-select";
 import { toastError, toastSuccess } from "@/lib/toast-helpers";
-import { DEFAULT_CLIENT_NAME, isNumericTaskId } from "@/lib/task-utils";
+import { DEFAULT_CLIENT_NAME, isNumericTaskId, parseImageCount } from "@/lib/task-utils";
 import type { User } from "@/lib/types";
 
 interface TaskFormProps {
@@ -43,6 +43,12 @@ export function TaskForm({ users = [], currentUserId, isAdmin }: TaskFormProps) 
       return;
     }
 
+    const totalImages = parseImageCount(imageCount);
+    if (totalImages === null) {
+      toastError("Invalid image count", "Total images must be at least 1.");
+      return;
+    }
+
     setLoading(true);
 
     const res = await fetch("/api/tasks", {
@@ -52,7 +58,7 @@ export function TaskForm({ users = [], currentUserId, isAdmin }: TaskFormProps) 
         task_id: taskId,
         task_name: taskName,
         client_name: clientName,
-        total_images_count: parseInt(imageCount) || 0,
+        total_images_count: totalImages,
         assigned_to: assignedTo,
         start_immediately: startImmediately,
       }),
@@ -105,7 +111,7 @@ export function TaskForm({ users = [], currentUserId, isAdmin }: TaskFormProps) 
         <Input
           id="imageCount"
           type="number"
-          min="0"
+          min="1"
           value={imageCount}
           onChange={(e) => setImageCount(e.target.value)}
           required

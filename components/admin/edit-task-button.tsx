@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/select";
 import { TaskNameSelect } from "@/components/tasks/task-name-select";
 import { toastError, toastSuccess } from "@/lib/toast-helpers";
-import { DEFAULT_CLIENT_NAME, isNumericTaskId, TASK_NAME_OPTIONS } from "@/lib/task-utils";
+import { DEFAULT_CLIENT_NAME, isNumericTaskId, parseImageCount, TASK_NAME_OPTIONS } from "@/lib/task-utils";
 import { TASK_STATUS_LABELS, type Task, type TaskStatus, type User } from "@/lib/types";
 
 interface EditTaskButtonProps {
@@ -67,6 +67,12 @@ export function EditTaskButton({ task, users, hasActiveSession = false }: EditTa
       return;
     }
 
+    const totalImages = parseImageCount(imageCount);
+    if (totalImages === null) {
+      toastError("Invalid image count", "Total images must be at least 1.");
+      return;
+    }
+
     setLoading(true);
 
     const res = await fetch(`/api/tasks/${task.id}`, {
@@ -76,7 +82,7 @@ export function EditTaskButton({ task, users, hasActiveSession = false }: EditTa
         task_id: taskId,
         task_name: taskName,
         client_name: clientName,
-        total_images_count: parseInt(imageCount) || 0,
+        total_images_count: totalImages,
         assigned_to: assignedTo,
         status,
       }),
@@ -139,7 +145,7 @@ export function EditTaskButton({ task, users, hasActiveSession = false }: EditTa
               <Input
                 id="editImageCount"
                 type="number"
-                min="0"
+                min="1"
                 value={imageCount}
                 onChange={(e) => setImageCount(e.target.value)}
                 required

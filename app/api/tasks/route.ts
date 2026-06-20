@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { DEFAULT_CLIENT_NAME, parseTaskId } from "@/lib/task-utils";
+import { DEFAULT_CLIENT_NAME, parseImageCount, parseTaskId } from "@/lib/task-utils";
 
 export async function POST(request: Request) {
   try {
@@ -28,6 +28,11 @@ export async function POST(request: Request) {
 
     const resolvedClientName = client_name?.trim() || DEFAULT_CLIENT_NAME;
 
+    const parsedImageCount = parseImageCount(total_images_count);
+    if (parsedImageCount === null) {
+      return NextResponse.json({ error: "Total images must be at least 1" }, { status: 400 });
+    }
+
     const status = start_immediately ? "in_progress" : "pending";
 
     const { data: task, error } = await supabase
@@ -36,7 +41,7 @@ export async function POST(request: Request) {
         task_id: parsedTaskId,
         task_name,
         client_name: resolvedClientName,
-        total_images_count: total_images_count || 0,
+        total_images_count: parsedImageCount,
         assigned_to: assigned_to || user.id,
         created_by: user.id,
         status,

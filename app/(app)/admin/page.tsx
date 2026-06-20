@@ -3,6 +3,7 @@ import { requireAdmin } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { AdminDashboard } from "@/components/admin/admin-dashboard";
 import { TasksPageFilters } from "@/components/tasks/tasks-page-filters";
+import { mapActiveSessionRows } from "@/lib/session-mapper";
 import {
   buildPaginationMeta,
   getPaginationRange,
@@ -20,7 +21,7 @@ import {
   sumSessionHoursInRange,
 } from "@/lib/reports";
 import { enrichTasksWithEditedCount } from "@/lib/task-utils";
-import type { Session, Task, UserOption } from "@/lib/types";
+import type { Task, UserOption } from "@/lib/types";
 
 export default async function AdminPage({
   searchParams,
@@ -51,7 +52,7 @@ export default async function AdminPage({
   const [
     { count: totalTasks },
     { data: tasksData, count: filteredTasksCount },
-    { data: activeSessions },
+    { data: activeSessionsData },
     { data: completedTasks },
     { data: sessionsData },
     { data: usersData },
@@ -60,7 +61,7 @@ export default async function AdminPage({
     tasksQuery,
     supabase
       .from("sessions")
-      .select("*, user:users(id, user_code), tasks(id, task_id, task_name, status)")
+      .select("*, user:users(id, user_code), tasks(*), session_segments(*)")
       .is("end_time", null),
     supabase.from("tasks").select("id, status").eq("status", "completed"),
     supabase.from("sessions").select("task_id, start_time, end_time, duration"),
@@ -69,7 +70,7 @@ export default async function AdminPage({
 
   const stats = {
     totalTasks: totalTasks || 0,
-    activeNow: activeSessions?.length || 0,
+    activeNow: activeSessionsData?.length || 0,
     completedToday: countCompletedTasksInRange(
       (completedTasks || []) as Array<{ id: string; status: "completed" }>,
       (sessionsData || []) as Array<{
@@ -92,15 +93,13 @@ export default async function AdminPage({
 
   const pagination = buildPaginationMeta(page, filteredTasksCount ?? 0, PAGE_SIZE);
   const tasks = await enrichTasksWithEditedCount(supabase, (tasksData || []) as Task[]);
+  const activeSessions = mapActiveSessionRows(activeSessionsData);
 
   return (
     <AdminDashboard
       stats={stats}
       tasks={tasks}
-      activeSessions={((activeSessions || []) as Array<Session & { tasks: Task }>).map((s) => ({
-        ...s,
-        task: s.tasks,
-      }))}
+      activeSessions={activeSessions}
       pagination={pagination}
       filters={
         <Suspense fallback={null}>
