@@ -132,7 +132,7 @@ export function ReportsView({
       next.set("to", to);
     }
 
-    const user = updates.user !== undefined ? updates.user : params.userId;
+    const user = "user" in updates ? updates.user : params.userId;
     if (user) next.set("user", user);
 
     const status = updates.status ?? params.status;
